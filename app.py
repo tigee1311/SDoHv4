@@ -1,9 +1,9 @@
 # app.py — SDoH Bilingual Survey (Streamlit)
 # - Bilingual (English/Español)
-# - 100+ questions with branching (adaptive)
+# - 100+ questions with branching (adaptive follow-ups)
 # - All visible questions shown in order, numbered
+# - Radios start with NO default selection (index=None; Streamlit >= 1.25)
 # - Exports: per-submission JSON, cumulative CSV/XLSX (no pandas)
-# - Radios use a placeholder so nothing is pre-selected
 
 import streamlit as st
 import json, csv, glob, datetime
@@ -56,6 +56,7 @@ def write_xlsx(rows, cols, xlsx_path, sheet_name="responses"):
     ws.append(cols)
     for r in rows:
         ws.append([r.get(c, "") for c in cols])
+    # autosize-ish
     for col_idx, col_name in enumerate(cols, start=1):
         width = max(10, min(60, int(max([len(str(col_name))] + [len(str(r.get(col_name,""))) for r in rows]) * 1.05)))
         ws.column_dimensions[ws.cell(row=1, column=col_idx).column_letter].width = width
@@ -143,7 +144,7 @@ def add_q(section, _id, en, es, qtype, options=None, branch=None):
         "branch": branch
     })
 
-# ---------- Access to Care (~10) ----------
+# ---------- Access to Health Services (~10) ----------
 add_q("Access to Health Services","q1_last_visit_any",
       "How long has it been since you last saw a doctor or other health professional about your health?",
       "¿Cuánto tiempo ha pasado desde la última vez que vio a un médico u otro profesional de la salud por su salud?",
@@ -548,19 +549,14 @@ add_q("Digital Access","portal_comm","Do you use email/patient portals to commun
 # =========================
 st.set_page_config(page_title="SDoH Survey", page_icon="🏥", layout="wide")
 
-# Style (bubbly buttons + larger section titles)
+# Style: modern headers, rounded buttons
 st.markdown("""
 <style>
-/* Section headers bigger */
 h3 { font-size: 1.6rem !important; }
-/* Radio/Buttons rounded feel */
 .stRadio > div { gap: .5rem; }
-button[kind="secondary"] { border-radius: 999px !important; }
-/* Make submit wide & rounded */
 div.stButton > button { border-radius: 999px; height: 46px; font-weight: 600; }
 .badge { display:inline-block; padding:3px 10px; border-radius:999px; background:#eef5ff; color:#246; font-size:.85rem; margin-bottom:6px; }
 .card { background:white; border-radius:16px; padding:18px 20px; box-shadow: 0 4px 18px rgba(0,0,0,.08); }
-.placeholder { color:#777; font-style: italic; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -571,23 +567,15 @@ st.write("")
 col_a, col_b, col_c = st.columns([1,2,1])
 with col_b:
     lang_choice = st.radio("Language / Idioma", ["English", "Español"], horizontal=True, index=0)
-
 lang = "en" if lang_choice == "English" else "es"
 
-# Placeholder first option for radios (prevents default selection)
-def radio_with_placeholder(label, options_labels, key):
-    # First element is a placeholder that maps to code=None
-    display_opts = ["— Select / Seleccione —"] + options_labels
-    idx = 0
-    if key in st.session_state:
-        # try to keep prior selection visible if exists
-        prior = st.session_state[key]
-        if prior in options_labels:
-            idx = options_labels.index(prior) + 1
-    picked = st.radio(label, display_opts, index=idx, key=f"radio_{key}", label_visibility="visible")
-    return None if picked == display_opts[0] else picked
+# ---- Radio helper with NO default ----
+def radio_force_click(label, options_labels, key):
+    # index=None => no default; requires Streamlit >= 1.25
+    picked = st.radio(label, options_labels, index=None, key=f"radio_{key}", label_visibility="visible")
+    return picked if picked is not None else None
 
-# Visibility utils
+# Branching helper (safe)
 def is_visible(q, ans_dict):
     br = q.get("branch")
     if br is None:
@@ -616,35 +604,46 @@ def fs_category(answers_dict):
     else: cat="Very low food security"
     return affirm, cat
 
-# Render sections & questions (all at once; adaptive follow-ups appear/hide)
-answers = {}   # id -> {"code","label"} or scalar for int/text
-qnum = 1
+# Prepass snapshot from session_state (for section visibility)
+def snapshot_from_state():
+    snap = {}
+    for q in QUESTIONS:
+        if q["type"] == "radio":
+            lbl = st.session_state.get(f"radio_{q['id']}", None)
+            if lbl is None:
+                snap[q["id"]] = {"code": None, "label": None}
+            else:
+                code = next((o["code"] for o in q["options"] if o[lang] == lbl), None)
+                snap[q["id"]] = {"code": code, "label": lbl}
+        elif q["type"] == "int":
+            snap[q["id"]] = st.session_state.get(f"num_{q['id']}", 0)
+        else:
+            snap[q["id"]] = st.session_state.get(f"text_{q['id']}", "").strip()
+    return snap
+
+answers_snapshot = snapshot_from_state()
+
+# Determine which sections have any visible questions
 seen_sections = []
-section_has_visible = {}
-
-# First pass: determine which sections are visible at least once
-# We'll compute on-the-fly while rendering, since Streamlit reruns.
-
+section_visible = {}
 for q in QUESTIONS:
-    # section start
     if q["section"] not in seen_sections:
         seen_sections.append(q["section"])
-        section_has_visible[q["section"]] = False
+        section_visible[q["section"]] = False
+    if is_visible(q, answers_snapshot):
+        section_visible[q["section"]] = True
 
-    # Compute visibility from current st.session_state-derived answers-so-far
-    # Build a temporary "answers_so_far" using what we stored while looping
-    visible = is_visible(q, answers)
-    if visible:
-        section_has_visible[q["section"]] = True
-
-# Render with numbering for visible items
+# Render sections & questions; build live answers in order
+answers = {}
+qnum = 1
 for section in seen_sections:
-    if not section_has_visible.get(section):
+    if not section_visible.get(section):
         continue
     st.markdown(f"<div class='badge'>{section}</div>", unsafe_allow_html=True)
     st.markdown(f"### {section}")
 
     for q in [qq for qq in QUESTIONS if qq["section"] == section]:
+        # Use current answers (built so far) for branching to ensure left-to-right adaptivity
         if not is_visible(q, answers):
             continue
 
@@ -652,27 +651,28 @@ for section in seen_sections:
         st.markdown(f"**{qnum}) {label_txt}**")
 
         if q["type"] == "radio":
-            # Build localized options
             opts = q["options"]
             labels_local = [o[lang] for o in opts]
-            picked_label = radio_with_placeholder("", labels_local, key=q["id"])
+            picked_label = radio_force_click("", labels_local, key=q["id"])
             if picked_label is None:
                 answers[q["id"]] = {"code": None, "label": None}
             else:
-                # map picked label back to code
                 code = next((o["code"] for o in opts if o[lang] == picked_label), None)
                 answers[q["id"]] = {"code": code, "label": picked_label}
+
         elif q["type"] == "int":
             v = st.number_input("", min_value=0, step=1, key=f"num_{q['id']}")
             answers[q["id"]] = v
+
         else:  # text
             v = st.text_input("", key=f"text_{q['id']}")
             answers[q["id"]] = v.strip()
+
         qnum += 1
 
     st.write("---")
 
-# Submit button
+# Submit centered
 col1, col2, col3 = st.columns([1,2,1])
 with col2:
     if st.button("✅ Submit" if lang=="en" else "✅ Enviar", use_container_width=True):
@@ -691,3 +691,4 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
