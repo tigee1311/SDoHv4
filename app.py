@@ -891,7 +891,13 @@ with col2:
         completed_at = datetime.datetime.now().isoformat(timespec="seconds")
         # Write back answers to state to persist
         for k, v in answers.items():
-            st.session_state[k] = v
+        # Only save simple scalars so Streamlit doesn't choke on dicts
+            if isinstance(v, (str, int, float, bool)) or v is None:
+                st.session_state[k] = v
+            elif isinstance(v, dict):
+                for subk, subv in v.items():
+                    st.session_state[f"{k}_{subk}"] = subv
+
 
         raw, cat = fs_category(answers)
         record = {
@@ -917,5 +923,6 @@ with col2:
         msg = "✅ Thank you! Your responses were submitted." if lang == "en" else "✅ ¡Gracias! Sus respuestas fueron enviadas."
         st.success(msg)
         st.balloons()
+
 
 
