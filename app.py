@@ -889,8 +889,6 @@ with col2:
     if st.button(submit_label, use_container_width=True, type="primary"):
         # Build record
         completed_at = datetime.datetime.now().isoformat(timespec="seconds")
-        # Write back answers to state to persist
-        for k, v in answers.items():
         # Only save simple scalars so Streamlit doesn't choke on dicts
         for k, v in answers.items():
             try:
@@ -928,6 +926,7 @@ with col2:
         msg = "✅ Thank you! Your responses were submitted." if lang == "en" else "✅ ¡Gracias! Sus respuestas fueron enviadas."
         st.success(msg)
         st.balloons()
+
 
 
 
