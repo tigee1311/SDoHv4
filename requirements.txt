@@ -1,2 +1,4 @@
-streamlit>=1.31
-openpyxl>=3.1
+streamlit
+gspread
+google-auth
+openpyxl
