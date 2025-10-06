@@ -892,11 +892,16 @@ with col2:
         # Write back answers to state to persist
         for k, v in answers.items():
         # Only save simple scalars so Streamlit doesn't choke on dicts
-            if isinstance(v, (str, int, float, bool)) or v is None:
-                st.session_state[k] = v
-            elif isinstance(v, dict):
-                for subk, subv in v.items():
-                    st.session_state[f"{k}_{subk}"] = subv
+        for k, v in answers.items():
+            try:
+        # Convert anything complex (dicts/lists) into JSON text
+                if isinstance(v, (dict, list)):
+                    st.session_state[k] = json.dumps(v, ensure_ascii=False)
+                else:
+                    st.session_state[k] = v
+            except Exception as e:
+                st.warning(f"Could not store {k} in session: {e}")
+
 
 
         raw, cat = fs_category(answers)
@@ -923,6 +928,7 @@ with col2:
         msg = "✅ Thank you! Your responses were submitted." if lang == "en" else "✅ ¡Gracias! Sus respuestas fueron enviadas."
         st.success(msg)
         st.balloons()
+
 
 
 
