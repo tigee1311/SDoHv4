@@ -732,7 +732,7 @@ for q in QUESTIONS:
         section_visible[q["section"]] = True
 
 # =========================
-# Render Sections as Expanders
+# Render Sections as Compact Expanders with Question Counts
 # =========================
 
 # English → Spanish section titles
@@ -768,6 +768,17 @@ SECTION_TITLES_ES = {
     "Digital Access": "Acceso digital"
 }
 
+# Compact styling (less vertical spacing)
+st.markdown("""
+<style>
+    div.block-container {padding-top: 1rem !important;}
+    .stExpander {margin-bottom: 4px !important;}
+    .stExpander div[role="button"] {padding: 0.3rem 0.7rem !important;}
+    .stExpanderContent {padding-top: 0.5rem !important; padding-bottom: 0.5rem !important;}
+    h3, h4, h5 {margin: 0.1rem 0 !important;}
+</style>
+""", unsafe_allow_html=True)
+
 answers = {}
 qnum = 1
 
@@ -775,16 +786,27 @@ for section in seen_sections:
     if not section_visible.get(section):
         continue
 
-    # Translate section title if Spanish
+    # Count how many visible questions are in this section
+    visible_qs = [q for q in QUESTIONS if q["section"] == section and is_visible(q, answers_snapshot)]
+    q_count = len(visible_qs)
+
+    # English or Spanish section name
     section_label = section if lang == "en" else SECTION_TITLES_ES.get(section, section)
-    
-    with st.expander(f"📂 {section_label}", expanded=False):  # collapsed by default
+
+    # Label text with count
+    label_text = (
+        f"📂 {section_label} — {q_count} question{'s' if q_count != 1 else ''}"
+        if lang == "en" else
+        f"📂 {section_label} — {q_count} pregunta{'s' if q_count != 1 else ''}"
+    )
+
+    with st.expander(label_text, expanded=False):
         for q in [qq for qq in QUESTIONS if qq["section"] == section]:
             if not is_visible(q, answers):
                 continue
 
             label_txt = q["text"][lang]
-            st.markdown(f"**{qnum}) {label_txt}**")
+            st.markdown(f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>", unsafe_allow_html=True)
 
             if q["type"] == "radio":
                 opts = q["options"]
@@ -800,13 +822,11 @@ for section in seen_sections:
                 v = st.number_input("", min_value=0, step=1, key=f"num_{q['id']}")
                 answers[q["id"]] = v
 
-            else:  # text
+            else:  # text input
                 v = st.text_input("", key=f"text_{q['id']}")
                 answers[q["id"]] = v.strip()
 
             qnum += 1
-
-    st.write("")  # spacing between expanders
 
 
 # Submit centered
@@ -828,6 +848,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
