@@ -661,11 +661,25 @@ div.stButton > button { border-radius: 999px; height: 46px; font-weight: 600; }
 st.markdown("<div style='text-align:center' class='card'><h2 style='color:#0a5bd6;margin:.2rem 0'>🏥 Social Determinants of Health — Patient Form</h2><div>Welcome! / ¡Bienvenido!</div></div>", unsafe_allow_html=True)
 st.write("")
 
-# Language choice (centered)
-col_a, col_b, col_c = st.columns([1,2,1])
-with col_b:
-    lang_choice = st.radio("Language / Idioma", ["English", "Español"], horizontal=True, index=0)
+# =========================
+# Language selector — left aligned, consistent with question layout
+# =========================
+
+st.markdown("""
+<style>
+.lang-radio label[data-testid="stMarkdownContainer"] p {
+    margin-bottom: 0px !important;
+}
+.lang-radio .stRadio > div {gap: 1rem !important;}
+.lang-radio {margin-top: 0.5rem !important; margin-bottom: 1rem !important;}
+</style>
+""", unsafe_allow_html=True)
+
+with st.container():
+    st.markdown("<div class='lang-radio'><p><strong>Language / Idioma:</strong></p></div>", unsafe_allow_html=True)
+    lang_choice = st.radio("", ["English", "Español"], horizontal=True, index=0, key="lang_choice")
 lang = "en" if lang_choice == "English" else "es"
+
 
 # ---- Radio helper with NO default ----
 def radio_force_click(label, options_labels, key):
@@ -849,6 +863,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
