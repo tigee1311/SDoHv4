@@ -575,6 +575,22 @@ add_q("Digital Access","portal_comm","Do you use email/patient portals to commun
 # =========================
 st.set_page_config(page_title="SDoH Survey", page_icon="🏥", layout="wide")
 
+# Add this near the top of your app (right after st.set_page_config)
+st.markdown("""
+<script>
+document.addEventListener('keydown', function(e) {
+    // Ctrl + D or Command + D
+    if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+        const sidebar = window.parent.document.querySelector('section[data-testid="stSidebar"]');
+        if (sidebar) {
+            sidebar.style.display = (sidebar.style.display === 'none' || sidebar.style.display === '') ? 'block' : 'none';
+        }
+    }
+});
+</script>
+""", unsafe_allow_html=True)
+
+
 # Style: modern headers, rounded buttons
 st.markdown("""
 <style>
@@ -717,6 +733,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
