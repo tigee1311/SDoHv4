@@ -1,9 +1,4 @@
 # app.py — SDoH Bilingual Survey (Streamlit)
-# - Bilingual (English/Español)
-# - 100+ questions with branching (adaptive follow-ups)
-# - All visible questions shown in order, numbered
-# - Radios start with NO default selection (index=None; Streamlit >= 1.25)
-# - Exports: per-submission JSON, cumulative CSV/XLSX (no pandas)
 
 import streamlit as st
 import json, csv, glob, datetime
@@ -662,30 +657,46 @@ st.markdown("<div style='text-align:center' class='card'><h2 style='color:#0a5bd
 st.write("")
 
 # =========================
-# Language selector — left aligned, consistent with question layout
+# Language Selector — Compact & Left-Aligned
 # =========================
 
 st.markdown("""
 <style>
-.lang-radio label[data-testid="stMarkdownContainer"] p {
-    margin-bottom: 0px !important;
+.lang-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;             /* small gap between label and radios */
+    margin: 0.5rem 0 1rem 0; /* minimal vertical spacing */
 }
-.lang-radio .stRadio > div {gap: 1rem !important;}
-.lang-radio {margin-top: 0.5rem !important; margin-bottom: 1rem !important;}
+.lang-row p {
+    margin: 0 !important;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+.stRadio > div {
+    gap: 0.5rem !important;  /* tighten radio buttons themselves */
+}
 </style>
 """, unsafe_allow_html=True)
 
-with st.container():
-    st.markdown("<div class='lang-radio'><p><strong>Language / Idioma:</strong></p></div>", unsafe_allow_html=True)
-    lang_choice = st.radio("", ["English", "Español"], horizontal=True, index=0, key="lang_choice")
+# Inline layout for Language / Idioma
+lang_container = st.container()
+with lang_container:
+    st.markdown(
+        "<div class='lang-row'><p>Language / Idioma:</p></div>",
+        unsafe_allow_html=True
+    )
+    # Renders the radio buttons right after the label
+    lang_choice = st.radio(
+        label="", 
+        options=["English", "Español"], 
+        horizontal=True, 
+        index=0, 
+        key="lang_choice"
+    )
+
 lang = "en" if lang_choice == "English" else "es"
 
-
-# ---- Radio helper with NO default ----
-def radio_force_click(label, options_labels, key):
-    # index=None => no default; requires Streamlit >= 1.25
-    picked = st.radio(label, options_labels, index=None, key=f"radio_{key}", label_visibility="visible")
-    return picked if picked is not None else None
 
 # Branching helper (safe)
 def is_visible(q, ans_dict):
@@ -863,6 +874,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
