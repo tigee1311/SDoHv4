@@ -9,6 +9,32 @@ import streamlit as st
 import json, csv, glob, datetime
 from pathlib import Path
 from openpyxl import Workbook, load_workbook
+import pandas as pd
+
+st.sidebar.title("Navigation")
+page = st.sidebar.radio("Go to", ["Survey", "Download Responses"])
+
+if page == "Download Responses":
+    st.title("📥 Download Collected Responses")
+
+    csv_path = "sdh_responses.csv"
+    xlsx_path = "sdh_responses.xlsx"
+
+    # Ensure file exists
+    if Path(csv_path).exists():
+        with open(csv_path, "rb") as f:
+            st.download_button("⬇️ Download CSV", f, file_name="sdh_responses.csv", mime="text/csv")
+    else:
+        st.warning("No CSV responses found yet.")
+
+    if Path(xlsx_path).exists():
+        with open(xlsx_path, "rb") as f:
+            st.download_button("⬇️ Download Excel (XLSX)", f, file_name="sdh_responses.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    else:
+        st.warning("No Excel responses found yet.")
+
+    st.stop()
+
 
 # =========================
 # Helpers & File Writers
@@ -691,6 +717,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
