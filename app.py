@@ -410,7 +410,7 @@ add_q("Health Literacy","hl_conf","How confident are you filling out medical for
 add_q("Health Literacy","hl_help_read","How often do you have someone help you read health materials?",
       "¿Con qué frecuencia alguien le ayuda a leer materiales de salud?","radio", options=FREQ5)
 add_q("Health Literacy","hl_learn_prob","How often do you have problems learning about your medical condition due to written information?",
-      "¿Con qué frecuencia tiene problemas para aprender sobre su condición por la información escrita?","radio", options=FREQ5)
+      "¿Con qué frecuencia tiene problemas para ap sobre su condición por la información escrita?","radio", options=FREQ5)
 
 # ---------- General Health & Sexual Orientation ----------
 add_q("General Health","gen_health","Overall, how would you rate your health?","En general, ¿cómo califica su salud?","radio", options=GEN_HEALTH)
@@ -732,7 +732,7 @@ for q in QUESTIONS:
         section_visible[q["section"]] = True
 
 # =========================
-# Render Sections as Compact Expanders with Counts + Indented Branch Questions
+# Render Sections: Compact, Collapsible, Indented Sub-Questions
 # =========================
 
 SECTION_TITLES_ES = {
@@ -767,7 +767,7 @@ SECTION_TITLES_ES = {
     "Digital Access": "Acceso digital"
 }
 
-# Compact styling and indentation for sub-questions
+# --- Style tweaks: compact + indented subquestions ---
 st.markdown("""
 <style>
     div.block-container {padding-top: 1rem !important;}
@@ -775,7 +775,9 @@ st.markdown("""
     .stExpander div[role="button"] {padding: 0.3rem 0.6rem !important;}
     .stExpanderContent {padding-top: 0.4rem !important; padding-bottom: 0.4rem !important;}
     h3, h4, h5, p {margin: 0.15rem 0 !important;}
-    .subquestion {margin-left: 25px !important; border-left: 2px solid #d0d7de; padding-left: 10px; background: #fafafa; border-radius: 4px;}
+    .subq {margin-left: 30px !important; border-left: 2px solid #d0d7de; padding-left: 12px;
+           background: #fafafa; border-radius: 6px; padding-top: 6px; padding-bottom: 4px;}
+    .subq .stRadio, .subq .stNumberInput, .subq .stTextInput {margin-left: 8px !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -786,6 +788,7 @@ for section in seen_sections:
     if not section_visible.get(section):
         continue
 
+    # Count visible questions in this section
     visible_qs = [q for q in QUESTIONS if q["section"] == section and is_visible(q, answers_snapshot)]
     q_count = len(visible_qs)
     section_label = section if lang == "en" else SECTION_TITLES_ES.get(section, section)
@@ -801,14 +804,15 @@ for section in seen_sections:
                 continue
 
             label_txt = q["text"][lang]
+            has_branch = q.get("branch") is not None
 
-            # Determine if it's a sub-question (i.e., has a branch condition)
-            if q.get("branch") is not None:
-                st.markdown(f"<div class='subquestion'><strong>{qnum}) {label_txt}</strong>", unsafe_allow_html=True)
+            # --- Start question block ---
+            if has_branch:
+                st.markdown(f"<div class='subq'><strong>{qnum}) {label_txt}</strong>", unsafe_allow_html=True)
             else:
                 st.markdown(f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>", unsafe_allow_html=True)
 
-            # Render question input (inside subquestion div if applicable)
+            # --- Render input inside indentation block if needed ---
             container = st.container()
             with container:
                 if q["type"] == "radio":
@@ -825,14 +829,15 @@ for section in seen_sections:
                     v = st.number_input("", min_value=0, step=1, key=f"num_{q['id']}")
                     answers[q["id"]] = v
 
-                else:  # text input
+                else:  # text
                     v = st.text_input("", key=f"text_{q['id']}")
                     answers[q["id"]] = v.strip()
 
-            if q.get("branch") is not None:
+            if has_branch:
                 st.markdown("</div>", unsafe_allow_html=True)
 
             qnum += 1
+
 
 
 # Submit centered
@@ -854,6 +859,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
