@@ -731,44 +731,83 @@ for q in QUESTIONS:
     if is_visible(q, answers_snapshot):
         section_visible[q["section"]] = True
 
-# Render sections & questions; build live answers in order
+# =========================
+# Render Sections as Expanders
+# =========================
+
+# English → Spanish section titles
+SECTION_TITLES_ES = {
+    "Access to Health Services": "Acceso a los servicios de salud",
+    "Income": "Ingresos",
+    "Birthplace": "Lugar de nacimiento",
+    "Address": "Dirección",
+    "Age": "Edad",
+    "Employment": "Empleo",
+    "Marital Status": "Estado civil",
+    "Education": "Educación",
+    "English Proficiency": "Dominio del inglés",
+    "Ethnicity & Race": "Etnicidad y raza",
+    "Food Insecurity": "Inseguridad alimentaria",
+    "Health Insurance": "Seguro de salud",
+    "Health Literacy": "Alfabetización en salud",
+    "General Health": "Salud general",
+    "Sexual Orientation": "Orientación sexual",
+    "Discrimination (Major)": "Discriminación (mayor)",
+    "Discrimination (Everyday)": "Discriminación (cotidiana)",
+    "Neighborhood": "Vecindario",
+    "Housing": "Vivienda",
+    "Transportation": "Transporte",
+    "Financial Strain": "Dificultades financieras",
+    "Social Support": "Apoyo social",
+    "Civic Engagement": "Participación cívica",
+    "Work & Labor": "Trabajo y empleo",
+    "Environment": "Medio ambiente",
+    "Community Resilience": "Resiliencia comunitaria",
+    "Tobacco Use": "Consumo de tabaco",
+    "Alcohol Use": "Consumo de alcohol",
+    "Digital Access": "Acceso digital"
+}
+
 answers = {}
 qnum = 1
+
 for section in seen_sections:
     if not section_visible.get(section):
         continue
-    st.markdown(f"<div class='badge'>{section}</div>", unsafe_allow_html=True)
-    st.markdown(f"### {section}")
 
-    for q in [qq for qq in QUESTIONS if qq["section"] == section]:
-        # Use current answers (built so far) for branching to ensure left-to-right adaptivity
-        if not is_visible(q, answers):
-            continue
+    # Translate section title if Spanish
+    section_label = section if lang == "en" else SECTION_TITLES_ES.get(section, section)
+    
+    with st.expander(f"📂 {section_label}", expanded=False):  # collapsed by default
+        for q in [qq for qq in QUESTIONS if qq["section"] == section]:
+            if not is_visible(q, answers):
+                continue
 
-        label_txt = q["text"][lang]
-        st.markdown(f"**{qnum}) {label_txt}**")
+            label_txt = q["text"][lang]
+            st.markdown(f"**{qnum}) {label_txt}**")
 
-        if q["type"] == "radio":
-            opts = q["options"]
-            labels_local = [o[lang] for o in opts]
-            picked_label = radio_force_click("", labels_local, key=q["id"])
-            if picked_label is None:
-                answers[q["id"]] = {"code": None, "label": None}
-            else:
-                code = next((o["code"] for o in opts if o[lang] == picked_label), None)
-                answers[q["id"]] = {"code": code, "label": picked_label}
+            if q["type"] == "radio":
+                opts = q["options"]
+                labels_local = [o[lang] for o in opts]
+                picked_label = radio_force_click("", labels_local, key=q["id"])
+                if picked_label is None:
+                    answers[q["id"]] = {"code": None, "label": None}
+                else:
+                    code = next((o["code"] for o in opts if o[lang] == picked_label), None)
+                    answers[q["id"]] = {"code": code, "label": picked_label}
 
-        elif q["type"] == "int":
-            v = st.number_input("", min_value=0, step=1, key=f"num_{q['id']}")
-            answers[q["id"]] = v
+            elif q["type"] == "int":
+                v = st.number_input("", min_value=0, step=1, key=f"num_{q['id']}")
+                answers[q["id"]] = v
 
-        else:  # text
-            v = st.text_input("", key=f"text_{q['id']}")
-            answers[q["id"]] = v.strip()
+            else:  # text
+                v = st.text_input("", key=f"text_{q['id']}")
+                answers[q["id"]] = v.strip()
 
-        qnum += 1
+            qnum += 1
 
-    st.write("---")
+    st.write("")  # spacing between expanders
+
 
 # Submit centered
 col1, col2, col3 = st.columns([1,2,1])
@@ -789,6 +828,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
