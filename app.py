@@ -11,7 +11,7 @@ page = st.sidebar.radio("Go to", ["Survey", "Download Responses"])
 
 # Password-protected Download Page
 if page == "Download Responses":
-    st.title("📥 Secure Download — Survey Responses")
+    st.title("Secure Download — Survey Responses")
 
     # ---- Step 1: Set your password ----
     # Option A: Hardcode (simple)
@@ -653,7 +653,7 @@ div.stButton > button { border-radius: 999px; height: 46px; font-weight: 600; }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown("<div style='text-align:center' class='card'><h2 style='color:#0a5bd6;margin:.2rem 0'>🏥 Social Determinants of Health — Patient Form</h2><div>Welcome! / ¡Bienvenido!</div></div>", unsafe_allow_html=True)
+st.markdown("<div style='text-align:center' class='card'><h2 style='color:#0a5bd6;margin:.2rem 0'>Social Determinants of Health — Patient Form</h2><div>Welcome! / ¡Bienvenido!</div></div>", unsafe_allow_html=True)
 st.write("")
 
 # ---- Radio helper with NO default selection ----
@@ -890,6 +890,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
