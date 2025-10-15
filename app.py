@@ -656,6 +656,22 @@ div.stButton > button { border-radius: 999px; height: 46px; font-weight: 600; }
 st.markdown("<div style='text-align:center' class='card'><h2 style='color:#0a5bd6;margin:.2rem 0'>🏥 Social Determinants of Health — Patient Form</h2><div>Welcome! / ¡Bienvenido!</div></div>", unsafe_allow_html=True)
 st.write("")
 
+# ---- Radio helper with NO default selection ----
+def radio_force_click(label, options_labels, key):
+    """
+    Creates a radio group with no preselected option (Streamlit >= 1.25).
+    Returns the selected label or None.
+    """
+    picked = st.radio(
+        label, 
+        options_labels, 
+        index=None, 
+        key=f"radio_{key}", 
+        label_visibility="collapsed"  # hides extra label
+    )
+    return picked if picked is not None else None
+
+
 # =========================
 # Language Selector — Compact & Left-Aligned
 # =========================
@@ -874,6 +890,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
