@@ -732,9 +732,10 @@ for q in QUESTIONS:
         section_visible[q["section"]] = True
 
 # =========================
-# Render Sections: Compact, Collapsible, Fully-Indented Sub-Questions
+# Render Sections as Compact Expanders with Question Counts
 # =========================
 
+# English → Spanish section titles
 SECTION_TITLES_ES = {
     "Access to Health Services": "Acceso a los servicios de salud",
     "Income": "Ingresos",
@@ -767,23 +768,14 @@ SECTION_TITLES_ES = {
     "Digital Access": "Acceso digital"
 }
 
-# --- Styling: compact + consistent indentation ---
+# Compact styling (less vertical spacing)
 st.markdown("""
 <style>
     div.block-container {padding-top: 1rem !important;}
     .stExpander {margin-bottom: 4px !important;}
-    .stExpander div[role="button"] {padding: 0.3rem 0.6rem !important;}
-    .stExpanderContent {padding-top: 0.4rem !important; padding-bottom: 0.4rem !important;}
-    h3, h4, h5, p {margin: 0.15rem 0 !important;}
-    .subq {
-        margin-left: 32px !important;
-        border-left: 2px solid #d0d7de;
-        padding: 8px 10px 6px 12px;
-        background: #fafafa;
-        border-radius: 6px;
-        margin-top: 4px;
-        margin-bottom: 6px;
-    }
+    .stExpander div[role="button"] {padding: 0.3rem 0.7rem !important;}
+    .stExpanderContent {padding-top: 0.5rem !important; padding-bottom: 0.5rem !important;}
+    h3, h4, h5 {margin: 0.1rem 0 !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -794,9 +786,14 @@ for section in seen_sections:
     if not section_visible.get(section):
         continue
 
+    # Count how many visible questions are in this section
     visible_qs = [q for q in QUESTIONS if q["section"] == section and is_visible(q, answers_snapshot)]
     q_count = len(visible_qs)
+
+    # English or Spanish section name
     section_label = section if lang == "en" else SECTION_TITLES_ES.get(section, section)
+
+    # Label text with count
     label_text = (
         f"📂 {section_label} — {q_count} question{'s' if q_count != 1 else ''}"
         if lang == "en" else
@@ -809,18 +806,8 @@ for section in seen_sections:
                 continue
 
             label_txt = q["text"][lang]
-            has_branch = q.get("branch") is not None
+            st.markdown(f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>", unsafe_allow_html=True)
 
-            # ----- unified container so text + widget indent equally -----
-            if has_branch:
-                st.markdown(f"<div class='subq'>", unsafe_allow_html=True)
-
-            st.markdown(
-                f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>",
-                unsafe_allow_html=True
-            )
-
-            # render the widget (inherits indentation automatically)
             if q["type"] == "radio":
                 opts = q["options"]
                 labels_local = [o[lang] for o in opts]
@@ -838,9 +825,6 @@ for section in seen_sections:
             else:  # text input
                 v = st.text_input("", key=f"text_{q['id']}")
                 answers[q["id"]] = v.strip()
-
-            if has_branch:
-                st.markdown("</div>", unsafe_allow_html=True)
 
             qnum += 1
 
@@ -865,6 +849,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
