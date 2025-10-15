@@ -732,7 +732,7 @@ for q in QUESTIONS:
         section_visible[q["section"]] = True
 
 # =========================
-# Render Sections: Compact, Collapsible, Indented Sub-Questions
+# Render Sections: Compact, Collapsible, Fully-Indented Sub-Questions
 # =========================
 
 SECTION_TITLES_ES = {
@@ -767,7 +767,7 @@ SECTION_TITLES_ES = {
     "Digital Access": "Acceso digital"
 }
 
-# --- Style tweaks: compact + indented subquestions ---
+# --- Styling: compact + consistent indentation ---
 st.markdown("""
 <style>
     div.block-container {padding-top: 1rem !important;}
@@ -775,9 +775,15 @@ st.markdown("""
     .stExpander div[role="button"] {padding: 0.3rem 0.6rem !important;}
     .stExpanderContent {padding-top: 0.4rem !important; padding-bottom: 0.4rem !important;}
     h3, h4, h5, p {margin: 0.15rem 0 !important;}
-    .subq {margin-left: 30px !important; border-left: 2px solid #d0d7de; padding-left: 12px;
-           background: #fafafa; border-radius: 6px; padding-top: 6px; padding-bottom: 4px;}
-    .subq .stRadio, .subq .stNumberInput, .subq .stTextInput {margin-left: 8px !important;}
+    .subq {
+        margin-left: 32px !important;
+        border-left: 2px solid #d0d7de;
+        padding: 8px 10px 6px 12px;
+        background: #fafafa;
+        border-radius: 6px;
+        margin-top: 4px;
+        margin-bottom: 6px;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -788,7 +794,6 @@ for section in seen_sections:
     if not section_visible.get(section):
         continue
 
-    # Count visible questions in this section
     visible_qs = [q for q in QUESTIONS if q["section"] == section and is_visible(q, answers_snapshot)]
     q_count = len(visible_qs)
     section_label = section if lang == "en" else SECTION_TITLES_ES.get(section, section)
@@ -806,32 +811,33 @@ for section in seen_sections:
             label_txt = q["text"][lang]
             has_branch = q.get("branch") is not None
 
-            # --- Start question block ---
+            # ----- unified container so text + widget indent equally -----
             if has_branch:
-                st.markdown(f"<div class='subq'><strong>{qnum}) {label_txt}</strong>", unsafe_allow_html=True)
-            else:
-                st.markdown(f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>", unsafe_allow_html=True)
+                st.markdown(f"<div class='subq'>", unsafe_allow_html=True)
 
-            # --- Render input inside indentation block if needed ---
-            container = st.container()
-            with container:
-                if q["type"] == "radio":
-                    opts = q["options"]
-                    labels_local = [o[lang] for o in opts]
-                    picked_label = radio_force_click("", labels_local, key=q["id"])
-                    if picked_label is None:
-                        answers[q["id"]] = {"code": None, "label": None}
-                    else:
-                        code = next((o["code"] for o in opts if o[lang] == picked_label), None)
-                        answers[q["id"]] = {"code": code, "label": picked_label}
+            st.markdown(
+                f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>",
+                unsafe_allow_html=True
+            )
 
-                elif q["type"] == "int":
-                    v = st.number_input("", min_value=0, step=1, key=f"num_{q['id']}")
-                    answers[q["id"]] = v
+            # render the widget (inherits indentation automatically)
+            if q["type"] == "radio":
+                opts = q["options"]
+                labels_local = [o[lang] for o in opts]
+                picked_label = radio_force_click("", labels_local, key=q["id"])
+                if picked_label is None:
+                    answers[q["id"]] = {"code": None, "label": None}
+                else:
+                    code = next((o["code"] for o in opts if o[lang] == picked_label), None)
+                    answers[q["id"]] = {"code": code, "label": picked_label}
 
-                else:  # text
-                    v = st.text_input("", key=f"text_{q['id']}")
-                    answers[q["id"]] = v.strip()
+            elif q["type"] == "int":
+                v = st.number_input("", min_value=0, step=1, key=f"num_{q['id']}")
+                answers[q["id"]] = v
+
+            else:  # text input
+                v = st.text_input("", key=f"text_{q['id']}")
+                answers[q["id"]] = v.strip()
 
             if has_branch:
                 st.markdown("</div>", unsafe_allow_html=True)
@@ -859,6 +865,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
