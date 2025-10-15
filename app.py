@@ -14,6 +14,55 @@ import pandas as pd
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Survey", "Download Responses"])
 
+# Password-protected Download Page
+if page == "Download Responses":
+    st.title("📥 Secure Download — Survey Responses")
+
+    # ---- Step 1: Set your password ----
+    # Option A: Hardcode (simple)
+    PASSWORD = "Health2025"
+
+    # Option B (recommended): Load from environment variable
+    # import os
+    # PASSWORD = os.getenv("SDOH_DOWNLOAD_PASS", "Health2025")
+
+    # ---- Step 2: Ask for password ----
+    st.markdown("Please enter the access password to view and download survey data:")
+    pw_input = st.text_input("Password", type="password")
+
+    if pw_input == "":
+        st.info("🔒 Enter password to proceed.")
+        st.stop()
+
+    elif pw_input != PASSWORD:
+        st.error("❌ Incorrect password.")
+        st.stop()
+
+    else:
+        st.success("✅ Access granted.")
+        st.write("You can now download the collected responses below:")
+
+        csv_path = "sdh_responses.csv"
+        xlsx_path = "sdh_responses.xlsx"
+
+        # ---- Step 3: Offer secure downloads ----
+        from pathlib import Path
+        if Path(csv_path).exists():
+            with open(csv_path, "rb") as f:
+                st.download_button("⬇️ Download CSV", f, file_name="sdh_responses.csv", mime="text/csv")
+        else:
+            st.warning("No CSV file found yet.")
+
+        if Path(xlsx_path).exists():
+            with open(xlsx_path, "rb") as f:
+                st.download_button("⬇️ Download Excel (XLSX)", f, file_name="sdh_responses.xlsx",
+                                   mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        else:
+            st.warning("No Excel file found yet.")
+
+    st.stop()
+
+
 if page == "Download Responses":
     st.title("📥 Download Collected Responses")
 
@@ -733,6 +782,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
