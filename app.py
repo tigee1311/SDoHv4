@@ -622,7 +622,14 @@ add_q("Digital Access","portal_comm","Do you use email/patient portals to commun
 # =========================
 # Streamlit UI
 # =========================
-st.set_page_config(page_title="SDoH Survey", page_icon="🏥", layout="wide")
+#st.set_page_config(page_title="SDoH Survey", page_icon="🏥", layout="wide")
+
+st.set_page_config(
+    page_title="SDoH Survey",
+    page_icon="🏥",
+    layout="wide",
+    initial_sidebar_state="collapsed"  # 👈 hides sidebar by default
+)
 
 # Add this near the top of your app (right after st.set_page_config)
 st.markdown("""
@@ -782,6 +789,7 @@ with col2:
         save_all_outputs(record)
         st.success("✅ Thank you! Survey complete." if lang=="en" else "✅ ¡Gracias! Encuesta completada.")
         st.balloons()
+
 
 
 
