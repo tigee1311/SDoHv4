@@ -17,6 +17,12 @@ st.set_page_config(
 )
 
 # =========================
+# Section completion tracking
+# =========================
+if "completed_sections" not in st.session_state:
+    st.session_state.completed_sections = []  # stores section names that were saved
+
+# =========================
 # Sidebar Navigation
 # =========================
 st.sidebar.title("Navigation")
@@ -1379,10 +1385,14 @@ for section in seen_sections:
     q_count = len(visible_qs)
     section_label = section if lang == "en" else SECTION_TITLES_ES.get(section, section)
 
+    # ✅ Green section indicator after submit/save
+    done = section in st.session_state.completed_sections
+    icon = "🟩" if done else "📂"
+
     label_text = (
-        f"📂 {section_label} — {q_count} question{'s' if q_count != 1 else ''}"
+        f"{icon} {section_label} — {q_count} question{'s' if q_count != 1 else ''}"
         if lang == "en"
-        else f"📂 {section_label} — {q_count} pregunta{'s' if q_count != 1 else ''}"
+        else f"{icon} {section_label} — {q_count} pregunta{'s' if q_count != 1 else ''}"
     )
 
     with st.expander(label_text, expanded=False):
@@ -1452,11 +1462,15 @@ for section in seen_sections:
                 }
 
                 save_all_outputs(record)
-                st.success(
-                    "✅ Section saved."
-                    if lang == "en"
-                    else "✅ Sección guardada."
-                )
+
+                # ✅ mark section as completed + rerun so header updates to 🟩 immediately
+                if section not in st.session_state.completed_sections:
+                    st.session_state.completed_sections.append(section)
+
+                st.success("✅ Section saved." if lang == "en" else "✅ Sección guardada.")
+                st.rerun()
+
+
 
 
 
