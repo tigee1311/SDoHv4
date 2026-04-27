@@ -27,14 +27,6 @@ export OPENAI_API_KEY="..."
 export OPENAI_TRANSCRIPTION_MODEL="whisper-1"
 ```
 
-ElevenLabs is available as an optional UI toggle if you install its SDK and set:
-
-```bash
-pip install elevenlabs
-export ELEVENLABS_API_KEY="..."
-export ELEVENLABS_VOICE_ID="..."
-```
-
 ## Microphone notes
 
 Streamlit records through the browser, so local testing requires a browser with microphone permission. If you deploy remotely, users record audio in their own browser and the app transcribes that recording on the server.

@@ -11,9 +11,6 @@ TTS_LOCALES = {"en": "en", "es": "es"}
 
 UI_TEXT = {
     "voice_settings": {"en": "Voice settings", "es": "Opciones de voz"},
-    "tts_provider": {"en": "Voice output", "es": "Salida de voz"},
-    "tts_gtts": {"en": "gTTS", "es": "gTTS"},
-    "tts_elevenlabs": {"en": "ElevenLabs", "es": "ElevenLabs"},
     "auto_read_next": {"en": "Auto-read next question", "es": "Leer automáticamente la siguiente pregunta"},
     "voice_help": {
         "en": "Use the microphone control under a question to record an answer, then click Transcribe.",

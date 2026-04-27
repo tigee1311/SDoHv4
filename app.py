@@ -1256,17 +1256,7 @@ lang = selected_language(lang_choice)
 with st.container():
     with st.expander(t("voice_settings", lang), expanded=False):
         st.caption(t("voice_help", lang))
-        voice_cols = st.columns([1, 1])
-        with voice_cols[0]:
-            tts_provider = st.radio(
-                t("tts_provider", lang),
-                options=["gTTS", "ElevenLabs"],
-                index=0,
-                horizontal=True,
-                key="tts_provider",
-            )
-        with voice_cols[1]:
-            auto_read_next = st.checkbox(t("auto_read_next", lang), key="auto_read_next")
+        auto_read_next = st.checkbox(t("auto_read_next", lang), key="auto_read_next")
 
 if "last_answered_question" not in st.session_state:
     st.session_state.last_answered_question = None
@@ -1350,7 +1340,7 @@ def _autoplay_audio(audio_bytes, mime="audio/mp3"):
         unsafe_allow_html=True,
     )
 
-def render_voice_controls(q, lang, provider):
+def render_voice_controls(q, lang):
     """Render speaker and microphone controls for one question."""
     control_cols = st.columns([0.12, 0.12, 0.76])
 
@@ -1358,7 +1348,7 @@ def render_voice_controls(q, lang, provider):
         if st.button("🔊", key=f"speak_{q['id']}", help=t("speak", lang)):
             try:
                 with st.spinner(t("tts_loading", lang)):
-                    audio = synthesize_speech(question_with_explanation(q, lang), lang, provider)
+                    audio = synthesize_speech(question_with_explanation(q, lang), lang)
                 _autoplay_audio(audio)
             except Exception as exc:
                 st.warning(f"{t('tts_unavailable', lang)} {exc}")
@@ -1512,7 +1502,7 @@ for section in seen_sections:
                 f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>",
                 unsafe_allow_html=True,
             )
-            render_voice_controls(q, lang, tts_provider)
+            render_voice_controls(q, lang)
 
             if q["type"] == "radio":
                 opts = q["options"]
@@ -1534,7 +1524,7 @@ for section in seen_sections:
                 if next_q is not None and st.session_state.get("auto_read_target") != next_q["id"]:
                     try:
                         with st.spinner(t("tts_loading", lang)):
-                            audio = synthesize_speech(question_with_explanation(next_q, lang), lang, tts_provider)
+                            audio = synthesize_speech(question_with_explanation(next_q, lang), lang)
                         st.session_state.auto_read_target = next_q["id"]
                         _autoplay_audio(audio)
                     except Exception as exc:
