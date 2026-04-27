@@ -2,9 +2,15 @@
 
 import streamlit as st
 import json, csv, glob, datetime
+import base64
+import difflib
+import re
 from pathlib import Path
 from openpyxl import Workbook, load_workbook
 import pandas as pd
+from language_manager import question_with_explanation, selected_language, t
+from voice_input import streamlit_audio_input, transcribe_audio
+from voice_output import synthesize_speech
 
 # =========================
 # Page config
@@ -1245,7 +1251,25 @@ with lang_container:
         key="lang_choice",
     )
 
-lang = "en" if lang_choice == "English" else "es"
+lang = selected_language(lang_choice)
+
+with st.container():
+    with st.expander(t("voice_settings", lang), expanded=False):
+        st.caption(t("voice_help", lang))
+        voice_cols = st.columns([1, 1])
+        with voice_cols[0]:
+            tts_provider = st.radio(
+                t("tts_provider", lang),
+                options=["gTTS", "ElevenLabs"],
+                index=0,
+                horizontal=True,
+                key="tts_provider",
+            )
+        with voice_cols[1]:
+            auto_read_next = st.checkbox(t("auto_read_next", lang), key="auto_read_next")
+
+if "last_answered_question" not in st.session_state:
+    st.session_state.last_answered_question = None
 
 # Branching helper (safe)
 def is_visible(q, ans_dict):
@@ -1283,6 +1307,91 @@ def fs_category(answers_dict):
     else:
         cat = "Very low food security"
     return affirm, cat
+
+def _best_option_label(transcript, options, lang):
+    """Map spoken text to the closest visible radio option."""
+    if not transcript:
+        return None
+    normalized = transcript.strip().lower()
+    labels = [o[lang] for o in options]
+    for label in labels:
+        if normalized == label.lower():
+            return label
+    for label in labels:
+        label_lower = label.lower()
+        if normalized in label_lower or label_lower in normalized:
+            return label
+    matches = difflib.get_close_matches(normalized, [label.lower() for label in labels], n=1, cutoff=0.45)
+    if not matches:
+        return None
+    return next((label for label in labels if label.lower() == matches[0]), None)
+
+def _apply_transcript_to_question(q, transcript, lang):
+    """Populate the matching Streamlit answer widget from a transcript."""
+    if q["type"] == "radio":
+        label = _best_option_label(transcript, q["options"], lang)
+        if label:
+            st.session_state[f"radio_{q['id']}"] = label
+            return True
+        return False
+    if q["type"] == "int":
+        match = re.search(r"\d+", transcript.replace(",", ""))
+        if match:
+            st.session_state[f"num_{q['id']}"] = int(match.group(0))
+            return True
+        return False
+    st.session_state[f"text_{q['id']}"] = transcript.strip()
+    return True
+
+def _autoplay_audio(audio_bytes, mime="audio/mp3"):
+    encoded = base64.b64encode(audio_bytes).decode("utf-8")
+    st.markdown(
+        f"<audio autoplay controls src='data:{mime};base64,{encoded}'></audio>",
+        unsafe_allow_html=True,
+    )
+
+def render_voice_controls(q, lang, provider):
+    """Render speaker and microphone controls for one question."""
+    control_cols = st.columns([0.12, 0.12, 0.76])
+
+    with control_cols[0]:
+        if st.button("🔊", key=f"speak_{q['id']}", help=t("speak", lang)):
+            try:
+                with st.spinner(t("tts_loading", lang)):
+                    audio = synthesize_speech(question_with_explanation(q, lang), lang, provider)
+                _autoplay_audio(audio)
+            except Exception as exc:
+                st.warning(f"{t('tts_unavailable', lang)} {exc}")
+
+    with control_cols[1]:
+        mic_open = st.toggle("🎤", key=f"mic_toggle_{q['id']}", help=t("record", lang), label_visibility="collapsed")
+
+    if mic_open:
+        audio_file = streamlit_audio_input(t("record_answer", lang), key=f"audio_{q['id']}")
+        if audio_file is not None:
+            if st.button(t("transcribe", lang), key=f"transcribe_{q['id']}"):
+                try:
+                    with st.spinner(t("transcribing", lang)):
+                        transcript, meta = transcribe_audio(audio_file, lang)
+                    if not transcript:
+                        st.warning(t("empty_transcript", lang))
+                    elif _apply_transcript_to_question(q, transcript, lang):
+                        st.session_state[f"voice_transcript_{q['id']}"] = transcript
+                        st.session_state[f"voice_meta_{q['id']}"] = meta
+                        st.session_state.last_answered_question = q["id"]
+                        st.success(transcript)
+                    else:
+                        st.warning(transcript)
+                except Exception as exc:
+                    st.warning(f"{t('voice_unavailable', lang)} {exc}")
+
+    transcript = st.session_state.get(f"voice_transcript_{q['id']}")
+    meta = st.session_state.get(f"voice_meta_{q['id']}", {})
+    if transcript:
+        caption = f"Transcript: {transcript}"
+        if meta.get("confidence") is not None:
+            caption += f" | {t('confidence', lang)}: {meta['confidence']:.2f}"
+        st.caption(caption)
 
 # Prepass snapshot from session_state (for section visibility)
 def snapshot_from_state():
@@ -1403,6 +1512,7 @@ for section in seen_sections:
                 f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>",
                 unsafe_allow_html=True,
             )
+            render_voice_controls(q, lang, tts_provider)
 
             if q["type"] == "radio":
                 opts = q["options"]
@@ -1418,6 +1528,17 @@ for section in seen_sections:
                 )
             else:  # text
                 st.text_input("", key=f"text_{q['id']}")
+
+            if auto_read_next and st.session_state.last_answered_question == q["id"]:
+                next_q = visible_qs[visible_qs.index(q) + 1] if visible_qs.index(q) + 1 < len(visible_qs) else None
+                if next_q is not None and st.session_state.get("auto_read_target") != next_q["id"]:
+                    try:
+                        with st.spinner(t("tts_loading", lang)):
+                            audio = synthesize_speech(question_with_explanation(next_q, lang), lang, tts_provider)
+                        st.session_state.auto_read_target = next_q["id"]
+                        _autoplay_audio(audio)
+                    except Exception as exc:
+                        st.warning(f"{t('tts_unavailable', lang)} {exc}")
 
             qnum += 1
 

@@ -2,3 +2,6 @@ streamlit
 gspread
 google-auth
 openpyxl
+speechrecognition
+gtts
+openai
