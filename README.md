@@ -20,9 +20,7 @@ Open the local Streamlit URL in a browser and allow microphone access when promp
 - Voice output uses gTTS by default and caches repeated audio prompts.
 - Voice input prefers OpenAI Whisper when `OPENAI_API_KEY` is set. Without that key, it falls back to `speech_recognition`.
 
-## Panel layout and explanations
-
-The survey is organized into tabs for Housing, Food Security, Transportation, Employment / Income, and Social Support. Each question keeps its existing response logic and voice controls.
+## Question explanations
 
 Click `Why this question?` below a question to show a concise explanation based on NIH and AMA social determinants of health guidance. The explanation text lives in `explanations.py` so it stays separate from the Streamlit UI code.
 

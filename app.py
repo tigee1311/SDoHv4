@@ -1473,174 +1473,123 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =========================
-# Render Category Panels
+# Render Sections with Mini Submit Buttons
 # =========================
-CATEGORY_CONFIG = {
-    "housing": {
-        "title": {"en": "Housing", "es": "Vivienda"},
-        "sections": ["Housing"],
-    },
-    "food": {
-        "title": {"en": "Food Security", "es": "Seguridad alimentaria"},
-        "sections": ["Food Insecurity"],
-    },
-    "transportation": {
-        "title": {"en": "Transportation", "es": "Transporte"},
-        "sections": ["Transportation"],
-    },
-    "employment_income": {
-        "title": {"en": "Employment / Income", "es": "Empleo / Ingresos"},
-        "sections": ["Employment", "Income", "Financial Strain", "Work & Labor"],
-    },
-    "social": {
-        "title": {"en": "Social Support", "es": "Apoyo social"},
-        "sections": ["Social Support"],
-    },
-}
+qnum = 1  # global question counter
 
-def visible_questions_for_sections(sections):
-    return [
+for section in seen_sections:
+    if not section_visible.get(section):
+        continue
+
+    # visible questions in this section (based on snapshot)
+    visible_qs = [
         q
         for q in QUESTIONS
-        if q["section"] in sections and is_visible(q, answers_snapshot)
+        if q["section"] == section and is_visible(q, answers_snapshot)
     ]
-
-def render_question(q, qnum, visible_qs):
-    label_txt = q["text"][lang]
-    st.markdown(
-        f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>",
-        unsafe_allow_html=True,
-    )
-    render_voice_controls(q, lang)
-    render_explanation_control(q, lang)
-
-    if q["type"] == "radio":
-        opts = q["options"]
-        labels_local = [o[lang] for o in opts]
-        radio_force_click("", labels_local, key=q["id"])
-    elif q["type"] == "int":
-        st.number_input(
-            "",
-            min_value=0,
-            step=1,
-            key=f"num_{q['id']}",
-        )
-    else:
-        st.text_input("", key=f"text_{q['id']}")
-
-    if auto_read_next and st.session_state.last_answered_question == q["id"]:
-        next_index = visible_qs.index(q) + 1
-        next_q = visible_qs[next_index] if next_index < len(visible_qs) else None
-        if next_q is not None and st.session_state.get("auto_read_target") != next_q["id"]:
-            try:
-                with st.spinner(t("tts_loading", lang)):
-                    audio = synthesize_speech(question_with_explanation(next_q, lang), lang)
-                st.session_state.auto_read_target = next_q["id"]
-                _autoplay_audio(audio)
-            except Exception as exc:
-                st.warning(f"{t('tts_unavailable', lang)} {exc}")
-
-def save_category(category_key, sections):
-    fresh_snapshot = snapshot_from_state()
-    sections_payload = {}
-    derived = {}
-
-    for section in sections:
-        section_answers = {}
-        for q in QUESTIONS:
-            if q["section"] != section:
-                continue
-            if not is_visible(q, fresh_snapshot):
-                continue
-            section_answers[q["id"]] = fresh_snapshot[q["id"]]
-        if section_answers:
-            sections_payload[section] = section_answers
-        if section == "Food Insecurity":
-            raw, cat = fs_category(fresh_snapshot)
-            derived["food_security_raw_score"] = raw
-            derived["food_security_category"] = cat
-
-    record = {
-        "meta": {
-            "completed_at": now_iso(),
-            "instrument": "SDoH Bilingual Full (Streamlit) v1.0",
-            "language": lang,
-            "category": category_key,
-        },
-        "sections": sections_payload,
-        "derived": derived,
-    }
-    save_all_outputs(record)
-
-    for section in sections_payload:
-        if section not in st.session_state.completed_sections:
-            st.session_state.completed_sections.append(section)
-
-def render_category_panel(category_key, qnum_state):
-    config = CATEGORY_CONFIG[category_key]
-    sections = config["sections"]
-    visible_qs = visible_questions_for_sections(sections)
-
     if not visible_qs:
-        st.info("No visible questions in this category." if lang == "en" else "No hay preguntas visibles en esta categoría.")
-        return
+        continue
 
-    section_count = len({q["section"] for q in visible_qs})
-    count_text = (
-        f"{len(visible_qs)} question{'s' if len(visible_qs) != 1 else ''} across {section_count} section{'s' if section_count != 1 else ''}"
+    q_count = len(visible_qs)
+    section_label = section if lang == "en" else SECTION_TITLES_ES.get(section, section)
+
+    # ✅ Green section indicator after submit/save
+    done = section in st.session_state.completed_sections
+    icon = "🟩" if done else "📂"
+
+    label_text = (
+        f"{icon} {section_label} — {q_count} question{'s' if q_count != 1 else ''}"
         if lang == "en"
-        else f"{len(visible_qs)} pregunta{'s' if len(visible_qs) != 1 else ''} en {section_count} sección{'es' if section_count != 1 else ''}"
+        else f"{icon} {section_label} — {q_count} pregunta{'s' if q_count != 1 else ''}"
     )
-    st.caption(count_text)
 
-    active_section = None
-    for q in visible_qs:
-        if q["section"] != active_section:
-            active_section = q["section"]
-            section_label = active_section if lang == "en" else SECTION_TITLES_ES.get(active_section, active_section)
-            done = active_section in st.session_state.completed_sections
-            icon = "🟩" if done else "📂"
-            st.markdown(f"#### {icon} {section_label}")
-        render_question(q, qnum_state["value"], visible_qs)
-        qnum_state["value"] += 1
+    with st.expander(label_text, expanded=False):
+        # Render questions
+        for q in visible_qs:
+            label_txt = q["text"][lang]
+            st.markdown(
+                f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>",
+                unsafe_allow_html=True,
+            )
+            render_voice_controls(q, lang)
+            render_explanation_control(q, lang)
 
-    st.markdown("<hr style='margin:0.5rem 0;'>", unsafe_allow_html=True)
-    mini_cols = st.columns([3, 1])
-    with mini_cols[1]:
-        mini_label = "✅ Save this panel" if lang == "en" else "✅ Guardar este panel"
-        if st.button(mini_label, key=f"submit_category_{category_key}"):
-            save_category(category_key, sections)
-            st.success("✅ Panel saved." if lang == "en" else "✅ Panel guardado.")
-            st.rerun()
+            if q["type"] == "radio":
+                opts = q["options"]
+                labels_local = [o[lang] for o in opts]
+                radio_force_click("", labels_local, key=q["id"])
 
-def render_housing_questions(qnum_state):
-    render_category_panel("housing", qnum_state)
+            elif q["type"] == "int":
+                st.number_input(
+                    "",
+                    min_value=0,
+                    step=1,
+                    key=f"num_{q['id']}",
+                )
+            else:  # text
+                st.text_input("", key=f"text_{q['id']}")
 
-def render_food_questions(qnum_state):
-    render_category_panel("food", qnum_state)
+            if auto_read_next and st.session_state.last_answered_question == q["id"]:
+                next_q = visible_qs[visible_qs.index(q) + 1] if visible_qs.index(q) + 1 < len(visible_qs) else None
+                if next_q is not None and st.session_state.get("auto_read_target") != next_q["id"]:
+                    try:
+                        with st.spinner(t("tts_loading", lang)):
+                            audio = synthesize_speech(question_with_explanation(next_q, lang), lang)
+                        st.session_state.auto_read_target = next_q["id"]
+                        _autoplay_audio(audio)
+                    except Exception as exc:
+                        st.warning(f"{t('tts_unavailable', lang)} {exc}")
 
-def render_transportation_questions(qnum_state):
-    render_category_panel("transportation", qnum_state)
+            qnum += 1
 
-def render_employment_income_questions(qnum_state):
-    render_category_panel("employment_income", qnum_state)
+        st.markdown("<hr style='margin:0.5rem 0;'>", unsafe_allow_html=True)
 
-def render_social_support_questions(qnum_state):
-    render_category_panel("social", qnum_state)
+        # Mini submit for this section
+        mini_cols = st.columns([3, 1])
+        with mini_cols[1]:
+            mini_label = (
+                "✅ Save this section"
+                if lang == "en"
+                else "✅ Guardar esta sección"
+            )
+            if st.button(mini_label, key=f"submit_section_{section}"):
 
-tab_labels = [CATEGORY_CONFIG[key]["title"][lang] for key in CATEGORY_CONFIG]
-tabs = st.tabs(tab_labels)
-qnum_state = {"value": 1}
-with tabs[0]:
-    render_housing_questions(qnum_state)
-with tabs[1]:
-    render_food_questions(qnum_state)
-with tabs[2]:
-    render_transportation_questions(qnum_state)
-with tabs[3]:
-    render_employment_income_questions(qnum_state)
-with tabs[4]:
-    render_social_support_questions(qnum_state)
+                # Fresh snapshot reflecting user's latest input
+                fresh_snapshot = snapshot_from_state()
+
+                # Collect only this section's visible answers
+                section_answers = {}
+                for q in QUESTIONS:
+                    if q["section"] != section:
+                        continue
+                    if not is_visible(q, fresh_snapshot):
+                        continue
+                    section_answers[q["id"]] = fresh_snapshot[q["id"]]
+
+                derived = {}
+                if section == "Food Insecurity":
+                    raw, cat = fs_category(fresh_snapshot)
+                    derived["food_security_raw_score"] = raw
+                    derived["food_security_category"] = cat
+
+                record = {
+                    "meta": {
+                        "completed_at": now_iso(),
+                        "instrument": "SDoH Bilingual Full (Streamlit) v1.0",
+                        "language": lang,
+                    },
+                    "sections": {section: section_answers},
+                    "derived": derived,
+                }
+
+                save_all_outputs(record)
+
+                # ✅ mark section as completed + rerun so header updates to 🟩 immediately
+                if section not in st.session_state.completed_sections:
+                    st.session_state.completed_sections.append(section)
+
+                st.success("✅ Section saved." if lang == "en" else "✅ Sección guardada.")
+                st.rerun()
 
 
 
