@@ -5,6 +5,20 @@ AMA guidance that social needs and structural conditions affect health outcomes.
 """
 
 EXPLANATIONS = {
+    "general_sdoh": {
+        "source": "NIH / AMA",
+        "en": (
+            "Social determinants of health are the conditions where people are born, grow, "
+            "work, live, and age. Asking this question helps identify social or practical "
+            "needs that may affect health, access to care, or a patient's ability to follow a care plan."
+        ),
+        "es": (
+            "Los determinantes sociales de la salud son las condiciones donde las personas nacen, "
+            "crecen, trabajan, viven y envejecen. Esta pregunta ayuda a identificar necesidades "
+            "sociales o prácticas que pueden afectar la salud, el acceso a la atención o la capacidad "
+            "de seguir un plan de cuidado."
+        ),
+    },
     "housing_instability": {
         "source": "NIH / AMA",
         "en": (
@@ -88,9 +102,7 @@ SECTION_EXPLANATION_KEYS = {
 
 def explanation_for_question(question, lang):
     """Return explanation text and source label for a question's SDoH category."""
-    key = SECTION_EXPLANATION_KEYS.get(question["section"])
-    if not key:
-        return None, None
+    key = SECTION_EXPLANATION_KEYS.get(question["section"], "general_sdoh")
     item = EXPLANATIONS[key]
     return item.get(lang, item["en"]), item["source"]
 
