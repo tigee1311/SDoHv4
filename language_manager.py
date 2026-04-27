@@ -32,30 +32,8 @@ UI_TEXT = {
         "es": "La salida de voz no está disponible.",
     },
     "confidence": {"en": "Confidence", "es": "Confianza"},
-}
-
-
-QUESTION_EXPLANATIONS = {
-    "Access to Health Services": {
-        "en": "This section asks about access to routine and urgent health care.",
-        "es": "Esta sección pregunta sobre el acceso a atención médica rutinaria y urgente.",
-    },
-    "Food Insecurity": {
-        "en": "These questions help identify whether food needs are being met consistently.",
-        "es": "Estas preguntas ayudan a identificar si las necesidades de comida se cubren de manera constante.",
-    },
-    "Health Literacy": {
-        "en": "These questions ask how easy or difficult it is to use health information and forms.",
-        "es": "Estas preguntas tratan sobre qué tan fácil o difícil es usar información y formularios de salud.",
-    },
-    "Housing": {
-        "en": "This section asks about housing stability and safety.",
-        "es": "Esta sección pregunta sobre estabilidad y seguridad de vivienda.",
-    },
-    "Transportation": {
-        "en": "These questions ask whether transportation affects access to care and essentials.",
-        "es": "Estas preguntas tratan sobre si el transporte afecta el acceso a atención y necesidades básicas.",
-    },
+    "why_question": {"en": "Why this question?", "es": "¿Por qué esta pregunta?"},
+    "source": {"en": "Source", "es": "Fuente"},
 }
 
 
@@ -75,12 +53,3 @@ def speech_locale(lang):
 
 def tts_locale(lang):
     return TTS_LOCALES.get(lang, "en")
-
-
-def question_with_explanation(question, lang):
-    """Build speech text for a question plus a short optional explanation."""
-    text = question["text"][lang]
-    explanation = QUESTION_EXPLANATIONS.get(question["section"], {}).get(lang)
-    if explanation:
-        return f"{text} {explanation}"
-    return text
