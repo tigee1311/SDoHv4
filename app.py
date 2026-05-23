@@ -1546,14 +1546,18 @@ if st.session_state.get("last_save_message"):
 st.markdown(
     """
 <style>
-    div.block-container {padding-bottom: 4rem !important;}
-    div.element-container:has(#floating-save-anchor) + div.element-container div[data-testid="stButton"] {
-        position: fixed;
-        right: 0.85rem;
-        top: 4.1rem;
-        z-index: 10000;
+    div.element-container:has(.section-save-anchor) + div.element-container {
+        position: sticky;
+        top: 3.25rem;
+        z-index: 20;
+        display: flex;
+        justify-content: flex-end;
+        margin: 0 0 0.35rem 0;
     }
-    div.element-container:has(#floating-save-anchor) + div.element-container div[data-testid="stButton"] button {
+    div.element-container:has(.section-save-anchor) + div.element-container div[data-testid="stButton"] {
+        width: auto;
+    }
+    div.element-container:has(.section-save-anchor) + div.element-container button {
         min-width: 54px;
         height: 26px;
         border-radius: 999px;
@@ -1566,7 +1570,7 @@ st.markdown(
         box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
         opacity: 0.92;
     }
-    div.element-container:has(#floating-save-anchor) + div.element-container div[data-testid="stButton"] button:hover {
+    div.element-container:has(.section-save-anchor) + div.element-container button:hover {
         opacity: 1;
         border-color: rgba(49, 51, 63, 0.34);
     }
@@ -1580,14 +1584,6 @@ st.caption(
     f"{progress['percentage']}% complete "
     f"({progress['answered']} of {progress['total']} required questions answered)"
 )
-
-st.markdown("<span id='floating-save-anchor'></span>", unsafe_allow_html=True)
-if st.button("Save", key="floating_save_responses"):
-    try:
-        save_current_responses("partial")
-        st.success("Responses saved successfully.")
-    except Exception as exc:
-        st.error(f"Could not save responses: {exc}")
 
 # Compact styling (less vertical spacing)
 st.markdown("""
@@ -1632,6 +1628,23 @@ for section in seen_sections:
     )
 
     with st.expander(label_text, expanded=False):
+        st.markdown("<span class='section-save-anchor'></span>", unsafe_allow_html=True)
+        if st.button("Save", key=f"submit_section_{section}", help=f"Save {section_label}"):
+            try:
+                save_current_responses("partial", section=section)
+
+                if section not in st.session_state.completed_sections:
+                    st.session_state.completed_sections.append(section)
+
+                st.session_state.last_save_message = (
+                    "Responses saved successfully."
+                    if lang == "en"
+                    else "Respuestas guardadas correctamente."
+                )
+                st.rerun()
+            except Exception as exc:
+                st.error(f"Could not save responses: {exc}")
+
         # Render questions
         for q in visible_qs:
             label_txt = q["text"][lang]
