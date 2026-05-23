@@ -1546,25 +1546,29 @@ if st.session_state.get("last_save_message"):
 st.markdown(
     """
 <style>
-    div.block-container {padding-bottom: 5.5rem !important;}
-    div[data-testid="stButton"]:has(button[kind="primary"]) {
+    div.block-container {padding-bottom: 4rem !important;}
+    div.element-container:has(#floating-save-anchor) + div.element-container div[data-testid="stButton"] {
         position: fixed;
-        right: 0.9rem;
-        bottom: 0.85rem;
+        right: 0.85rem;
+        top: 4.1rem;
         z-index: 10000;
     }
-    div[data-testid="stButton"]:has(button[kind="primary"]) button {
-        min-width: 76px;
-        height: 32px;
+    div.element-container:has(#floating-save-anchor) + div.element-container div[data-testid="stButton"] button {
+        min-width: 54px;
+        height: 26px;
         border-radius: 999px;
-        padding: 0 12px;
-        font-size: 0.78rem;
+        padding: 0 9px;
+        font-size: 0.7rem;
         font-weight: 600;
-        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+        border: 1px solid rgba(49, 51, 63, 0.2);
+        background: rgba(255, 255, 255, 0.96);
+        color: rgb(49, 51, 63);
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
         opacity: 0.92;
     }
-    div[data-testid="stButton"]:has(button[kind="primary"]) button:hover {
+    div.element-container:has(#floating-save-anchor) + div.element-container div[data-testid="stButton"] button:hover {
         opacity: 1;
+        border-color: rgba(49, 51, 63, 0.34);
     }
 </style>
 """,
@@ -1577,7 +1581,8 @@ st.caption(
     f"({progress['answered']} of {progress['total']} required questions answered)"
 )
 
-if st.button("Save", key="floating_save_responses", type="primary"):
+st.markdown("<span id='floating-save-anchor'></span>", unsafe_allow_html=True)
+if st.button("Save", key="floating_save_responses"):
     try:
         save_current_responses("partial")
         st.success("Responses saved successfully.")
@@ -1670,33 +1675,6 @@ for section in seen_sections:
                         st.warning(f"{t('tts_unavailable', lang)} {exc}")
 
             qnum += 1
-
-        st.markdown("<hr style='margin:0.5rem 0;'>", unsafe_allow_html=True)
-
-        # Mini submit for this section
-        mini_cols = st.columns([3, 1])
-        with mini_cols[1]:
-            mini_label = (
-                "✅ Save this section"
-                if lang == "en"
-                else "✅ Guardar esta sección"
-            )
-            if st.button(mini_label, key=f"submit_section_{section}"):
-                try:
-                    save_current_responses("partial", section=section)
-
-                    # ✅ mark section as completed + rerun so header updates to 🟩 immediately
-                    if section not in st.session_state.completed_sections:
-                        st.session_state.completed_sections.append(section)
-
-                    st.session_state.last_save_message = (
-                        "Responses saved successfully."
-                        if lang == "en"
-                        else "Respuestas guardadas correctamente."
-                    )
-                    st.rerun()
-                except Exception as exc:
-                    st.error(f"Could not save responses: {exc}")
 
 st.markdown("---")
 final_cols = st.columns([3, 1])
