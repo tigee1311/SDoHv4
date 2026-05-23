@@ -1,0 +1,21 @@
+# Local response exports and persistent survey workbooks
+sdoh_responses.xlsx
+sdh_responses.xlsx
+sdoh_response_*.json
+sdh_response_*.json
+sdoh_responses.csv
+sdh_responses.csv
+*.tmp.xlsx
+
+# Credentials and local secrets
+.env
+.env.*
+credentials*.json
+service-account*.json
+*service_account*.json
+.streamlit/secrets.toml
+
+# Python/cache/build artifacts
+__pycache__/
+*.py[cod]
+.DS_Store

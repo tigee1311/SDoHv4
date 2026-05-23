@@ -1,15 +1,23 @@
 # app.py — SDoH Bilingual Survey (Streamlit)
 
 import streamlit as st
-import json, csv, glob, datetime
 import base64
 import difflib
+import os
 import re
-from pathlib import Path
-from openpyxl import Workbook, load_workbook
-import pandas as pd
+import uuid
+from drive_upload import drive_upload_configured, upload_files_to_drive
 from explanations import explanation_for_question, question_with_explanation
 from language_manager import selected_language, t
+from storage import (
+    RESPONSE_WORKBOOK,
+    ensure_hospital_sheet,
+    export_hospital_workbook_bytes,
+    get_existing_hospitals,
+    load_hospital_data,
+    sanitize_sheet_name,
+    save_responses,
+)
 from voice_input import streamlit_audio_input, transcribe_audio
 from voice_output import synthesize_speech
 
@@ -34,142 +42,150 @@ if "completed_sections" not in st.session_state:
 # =========================
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Survey", "Download Responses"])
+INSTRUMENT_NAME = "SDoH Bilingual Full (Streamlit) v1.0"
+DOWNLOAD_PASSWORD_SECRET = "SDOH_DOWNLOAD_PASSWORD"
 
-# =========================
-# Password-protected Download Page
-# =========================
-if page == "Download Responses":
-    st.title("Secure Download — Survey Responses")
 
-    # ---- Step 1: Set your password ----
-    PASSWORD = "Health2025"
+def _get_config_value(name):
+    env_value = os.getenv(name)
+    if env_value:
+        return env_value
+    try:
+        value = st.secrets.get(name)
+        return str(value) if value else None
+    except Exception:
+        return None
 
-    # ---- Step 2: Ask for password ----
-    st.markdown("Please enter the access password to view and download survey data:")
+
+def _reset_survey_session(clear_hospital=True):
+    prefixes = (
+        "radio_",
+        "num_",
+        "text_",
+        "voice_transcript_",
+        "voice_meta_",
+        "mic_toggle_",
+        "audio_",
+    )
+    for key in list(st.session_state.keys()):
+        if key.startswith(prefixes):
+            del st.session_state[key]
+
+    for key in ["completed_sections", "last_answered_question", "auto_read_target", "last_save_message"]:
+        st.session_state.pop(key, None)
+
+    if clear_hospital:
+        for key in ["hospital_name", "hospital_sheet_name", "session_id"]:
+            st.session_state.pop(key, None)
+
+
+def _render_hospital_selection(title="Select Hospital", allow_new=True):
+    st.title(title)
+    st.caption("Responses are stored separately by hospital in isolated Excel worksheets.")
+
+    existing_hospitals = get_existing_hospitals()
+    selected_existing = ""
+    new_hospital = ""
+
+    if existing_hospitals:
+        selected_existing = st.selectbox(
+            "Choose an existing hospital",
+            [""] + existing_hospitals,
+            format_func=lambda value: "Select a hospital" if value == "" else value,
+            key="hospital_existing_choice",
+        )
+    else:
+        st.info("No existing hospitals have saved responses yet.")
+
+    if allow_new:
+        new_hospital = st.text_input("Or enter a new hospital name", key="hospital_new_name")
+
+    if st.button("Continue", type="primary", key="continue_hospital_selection"):
+        hospital_name = (new_hospital or selected_existing or "").strip()
+        if not hospital_name:
+            st.error("Select an existing hospital or enter a new hospital name to continue.")
+            return
+
+        try:
+            sheet_name = ensure_hospital_sheet(hospital_name)
+        except Exception as exc:
+            st.error(f"Could not prepare hospital storage: {exc}")
+            return
+
+        _reset_survey_session(clear_hospital=False)
+        st.session_state.hospital_name = hospital_name
+        st.session_state.hospital_sheet_name = sheet_name
+        st.session_state.session_id = str(uuid.uuid4())
+        st.session_state.completed_sections = []
+        st.rerun()
+
+
+def _render_download_page():
+    st.title("Secure Download - Survey Responses")
+
+    if not st.session_state.get("hospital_name"):
+        _render_hospital_selection("Select Hospital to Download Responses", allow_new=False)
+        st.stop()
+
+    hospital_name = st.session_state.hospital_name
+    st.info(f"Current hospital: {hospital_name}")
+
+    password = _get_config_value(DOWNLOAD_PASSWORD_SECRET)
+    if not password:
+        st.warning(
+            "Response downloads are disabled until SDOH_DOWNLOAD_PASSWORD is configured "
+            "as an environment variable or Streamlit secret."
+        )
+        st.stop()
+
+    st.markdown("Enter the download password to export responses for the selected hospital only.")
     pw_input = st.text_input("Password", type="password")
 
     if pw_input == "":
-        st.info("🔒 Enter password to proceed.")
+        st.info("Enter password to proceed.")
+        st.stop()
+    if pw_input != password:
+        st.error("Incorrect password.")
         st.stop()
 
-    elif pw_input != PASSWORD:
-        st.error("❌ Incorrect password.")
-        st.stop()
-
+    hospital_df = load_hospital_data(hospital_name)
+    if hospital_df.empty:
+        st.warning("No saved responses found for this hospital yet.")
     else:
-        st.success("✅ Access granted.")
-        st.write("You can now download the collected responses below:")
-
-        csv_path = "sdh_responses.csv"
-        xlsx_path = "sdh_responses.xlsx"
-
-        if Path(csv_path).exists():
-            with open(csv_path, "rb") as f:
-                st.download_button("⬇️ Download CSV", f, file_name="sdh_responses.csv", mime="text/csv")
-        else:
-            st.warning("No CSV file found yet.")
-
-        if Path(xlsx_path).exists():
-            with open(xlsx_path, "rb") as f:
-                st.download_button(
-                    "⬇️ Download Excel (XLSX)",
-                    f,
-                    file_name="sdh_responses.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-        else:
-            st.warning("No Excel file found yet.")
-
-    st.stop()
-
-# =========================
-# Helpers & File Writers
-# =========================
-def now_iso():
-    return datetime.datetime.now().isoformat(timespec="seconds")
-
-def flatten_for_table(record, prefer_labels=True):
-    flat = {}
-    def _f(prefix, obj):
-        if isinstance(obj, dict):
-            if prefer_labels and set(obj.keys()) == {"code", "label"}:
-                flat[prefix[:-1]] = obj.get("label")
-                return
-            for k, v in obj.items():
-                _f(f"{prefix}{k}.", v)
-        elif isinstance(obj, list):
-            for i, v in enumerate(obj):
-                _f(f"{prefix}{i}.", v)
-        else:
-            flat[prefix[:-1]] = obj
-    _f("", record)
-    return flat
-
-def write_csv(rows, cols, csv_path):
-    Path(csv_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(csv_path, "w", encoding="utf-8", newline="") as f:
-        w = csv.DictWriter(f, fieldnames=cols)
-        w.writeheader()
-        for r in rows:
-            out = {k: r.get(k, "") for k in cols}
-            w.writerow(out)
-
-def write_xlsx(rows, cols, xlsx_path, sheet_name="responses"):
-    Path(xlsx_path).parent.mkdir(parents=True, exist_ok=True)
-    if Path(xlsx_path).exists():
-        wb = load_workbook(xlsx_path)
-        if sheet_name in wb.sheetnames:
-            del wb[sheet_name]
-        ws = wb.create_sheet(sheet_name)
-    else:
-        wb = Workbook()
-        ws = wb.active
-        ws.title = sheet_name
-    ws.append(cols)
-    for r in rows:
-        ws.append([r.get(c, "") for c in cols])
-    # autosize-ish
-    for col_idx, col_name in enumerate(cols, start=1):
-        width = max(
-            10,
-            min(
-                60,
-                int(
-                    max(
-                        [len(str(col_name))]
-                        + [len(str(r.get(col_name, ""))) for r in rows]
-                    ) * 1.05
-                ),
-            ),
+        safe_name = sanitize_sheet_name(hospital_name)
+        st.success(f"Access granted. {len(hospital_df)} rows are available for this hospital.")
+        st.download_button(
+            "Download current hospital CSV",
+            hospital_df.to_csv(index=False).encode("utf-8"),
+            file_name=f"{safe_name}_sdoh_responses.csv",
+            mime="text/csv",
         )
-        ws.column_dimensions[ws.cell(row=1, column=col_idx).column_letter].width = width
-    wb.save(xlsx_path)
+        st.download_button(
+            "Download current hospital Excel",
+            export_hospital_workbook_bytes(hospital_name),
+            file_name=f"{safe_name}_sdoh_responses.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
 
-def save_all_outputs(record, csv_path="sdh_responses.csv", xlsx_path="sdh_responses.xlsx"):
-    """
-    Save ONE record (often one section) as JSON, then rebuild CSV/XLSX from all JSONs.
-    Each JSON may contain answers for one or more sections.
-    """
-    ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-    json_path = f"sdh_response_{ts}.json"
-    with open(json_path, "w", encoding="utf-8") as f:
-        json.dump(record, f, indent=2, ensure_ascii=False)
+    with st.expander("Google Drive upload placeholder", expanded=False):
+        configured = drive_upload_configured()
+        st.caption(
+            "Configured for future upload." if configured else "Disabled until Drive secrets are configured."
+        )
+        if st.button("Check Drive Upload Status"):
+            result = upload_files_to_drive([RESPONSE_WORKBOOK])
+            st.info(result["message"])
 
-    # rebuild CSV/XLSX from all JSONs
-    json_files = sorted(glob.glob("sdh_response_*.json"))
-    rows, all_keys = [], set(["timestamp"])
-    for jf in json_files:
-        with open(jf, "r", encoding="utf-8") as f:
-            rec = json.load(f)
-        flat = flatten_for_table(rec, prefer_labels=True)
-        row = {"timestamp": rec.get("meta", {}).get("completed_at")}
-        row.update(flat)
-        rows.append(row)
-        all_keys.update(row.keys())
-    cols = ["timestamp"] + sorted(k for k in all_keys if k != "timestamp")
-    write_csv(rows, cols, csv_path)
-    write_xlsx(rows, cols, xlsx_path, sheet_name="responses")
-    return json_path, csv_path, xlsx_path
+
+if st.session_state.get("hospital_name"):
+    st.sidebar.caption(f"Hospital: {st.session_state.hospital_name}")
+    if st.sidebar.button("Change hospital / start new session"):
+        _reset_survey_session(clear_hospital=True)
+        st.rerun()
+
+if page == "Download Responses":
+    _render_download_page()
+    st.stop()
 
 # =========================
 # Question Bank (bilingual + branching)
@@ -1168,6 +1184,12 @@ add_q(
 # =========================
 # Streamlit UI
 # =========================
+if not st.session_state.get("hospital_name"):
+    _render_hospital_selection("Select Hospital")
+    st.stop()
+
+if not st.session_state.get("session_id"):
+    st.session_state.session_id = str(uuid.uuid4())
 
 # Ctrl+D to toggle sidebar
 st.markdown("""
@@ -1198,6 +1220,7 @@ st.markdown(
     "<div style='text-align:center' class='card'><h2 style='color:#0a5bd6;margin:.2rem 0'>Social Determinants of Health — Patient Form</h2><div>Welcome! / ¡Bienvenido!</div></div>",
     unsafe_allow_html=True,
 )
+st.caption(f"Hospital: {st.session_state.hospital_name} | Session ID: {st.session_state.session_id}")
 st.write("")
 
 # ---- Radio helper with NO default selection ----
@@ -1208,7 +1231,7 @@ def radio_force_click(label, options_labels, key):
     we rely on session_state).
     """
     picked = st.radio(
-        label,
+        label or f"Answer for {key}",
         options_labels,
         index=None,
         key=f"radio_{key}",
@@ -1245,11 +1268,12 @@ with lang_container:
         unsafe_allow_html=True,
     )
     lang_choice = st.radio(
-        label="",
+        label="Language",
         options=["English", "Español"],
         horizontal=True,
         index=0,
         key="lang_choice",
+        label_visibility="collapsed",
     )
 
 lang = selected_language(lang_choice)
@@ -1411,12 +1435,76 @@ def snapshot_from_state():
                 )
                 snap[q["id"]] = {"code": code, "label": lbl}
         elif q["type"] == "int":
-            snap[q["id"]] = st.session_state.get(f"num_{q['id']}", 0)
+            snap[q["id"]] = st.session_state.get(f"num_{q['id']}", None)
         else:
             snap[q["id"]] = st.session_state.get(f"text_{q['id']}", "").strip()
     return snap
 
 answers_snapshot = snapshot_from_state()
+
+
+def is_required_question(q):
+    """Treat survey questions as required unless explicitly labeled optional."""
+    return "[optional]" not in q["text"].get("en", "").lower()
+
+
+def answer_is_complete(q, answer):
+    if q["type"] == "radio":
+        return isinstance(answer, dict) and answer.get("label") not in (None, "")
+    if q["type"] == "int":
+        return answer is not None
+    return bool(str(answer or "").strip())
+
+
+def visible_questions(snapshot, section=None, required_only=False):
+    questions = []
+    for question in QUESTIONS:
+        if section and question["section"] != section:
+            continue
+        if required_only and not is_required_question(question):
+            continue
+        if is_visible(question, snapshot):
+            questions.append(question)
+    return questions
+
+
+def completion_details(snapshot):
+    required_questions = visible_questions(snapshot, required_only=True)
+    total = len(required_questions)
+    answered = sum(
+        1
+        for question in required_questions
+        if answer_is_complete(question, snapshot.get(question["id"]))
+    )
+    percentage = round((answered / total) * 100) if total else 100
+    return {"answered": answered, "total": total, "percentage": percentage}
+
+
+def derived_values_for_questions(snapshot, questions):
+    derived = {}
+    if any(question["section"] == "Food Insecurity" for question in questions):
+        raw, category = fs_category(snapshot)
+        derived["food_security_raw_score"] = raw
+        derived["food_security_category"] = category
+    return derived
+
+
+def save_current_responses(status, section=None):
+    fresh_snapshot = snapshot_from_state()
+    questions_to_save = visible_questions(fresh_snapshot, section=section)
+    responses = {question["id"]: fresh_snapshot.get(question["id"]) for question in questions_to_save}
+    progress = completion_details(fresh_snapshot)
+    return save_responses(
+        st.session_state.hospital_name,
+        st.session_state.session_id,
+        responses,
+        status,
+        questions=questions_to_save,
+        completion_percentage=progress["percentage"],
+        language=lang,
+        instrument=INSTRUMENT_NAME,
+        derived=derived_values_for_questions(fresh_snapshot, questions_to_save),
+    )
 
 # Determine which sections have any visible questions
 seen_sections = []
@@ -1460,6 +1548,51 @@ SECTION_TITLES_ES = {
     "Alcohol Use": "Consumo de alcohol",
     "Digital Access": "Acceso digital",
 }
+
+progress = completion_details(answers_snapshot)
+if st.session_state.get("last_save_message"):
+    st.success(st.session_state.pop("last_save_message"))
+
+st.markdown(
+    """
+<style>
+    div.block-container {padding-bottom: 5.5rem !important;}
+    div[data-testid="stButton"]:has(button[kind="primary"]) {
+        position: fixed;
+        right: 0.9rem;
+        bottom: 0.85rem;
+        z-index: 10000;
+    }
+    div[data-testid="stButton"]:has(button[kind="primary"]) button {
+        min-width: 76px;
+        height: 32px;
+        border-radius: 999px;
+        padding: 0 12px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+        opacity: 0.92;
+    }
+    div[data-testid="stButton"]:has(button[kind="primary"]) button:hover {
+        opacity: 1;
+    }
+</style>
+""",
+    unsafe_allow_html=True,
+)
+
+st.progress(progress["percentage"] / 100)
+st.caption(
+    f"{progress['percentage']}% complete "
+    f"({progress['answered']} of {progress['total']} required questions answered)"
+)
+
+if st.button("Save", key="floating_save_responses", type="primary"):
+    try:
+        save_current_responses("partial")
+        st.success("Responses saved successfully.")
+    except Exception as exc:
+        st.error(f"Could not save responses: {exc}")
 
 # Compact styling (less vertical spacing)
 st.markdown("""
@@ -1521,13 +1654,19 @@ for section in seen_sections:
 
             elif q["type"] == "int":
                 st.number_input(
-                    "",
+                    f"Numeric answer for {q['id']}",
                     min_value=0,
+                    value=None,
                     step=1,
                     key=f"num_{q['id']}",
+                    label_visibility="collapsed",
                 )
             else:  # text
-                st.text_input("", key=f"text_{q['id']}")
+                st.text_input(
+                    f"Text answer for {q['id']}",
+                    key=f"text_{q['id']}",
+                    label_visibility="collapsed",
+                )
 
             if auto_read_next and st.session_state.last_answered_question == q["id"]:
                 next_q = visible_qs[visible_qs.index(q) + 1] if visible_qs.index(q) + 1 < len(visible_qs) else None
@@ -1553,43 +1692,40 @@ for section in seen_sections:
                 else "✅ Guardar esta sección"
             )
             if st.button(mini_label, key=f"submit_section_{section}"):
+                try:
+                    save_current_responses("partial", section=section)
 
-                # Fresh snapshot reflecting user's latest input
-                fresh_snapshot = snapshot_from_state()
+                    # ✅ mark section as completed + rerun so header updates to 🟩 immediately
+                    if section not in st.session_state.completed_sections:
+                        st.session_state.completed_sections.append(section)
 
-                # Collect only this section's visible answers
-                section_answers = {}
-                for q in QUESTIONS:
-                    if q["section"] != section:
-                        continue
-                    if not is_visible(q, fresh_snapshot):
-                        continue
-                    section_answers[q["id"]] = fresh_snapshot[q["id"]]
+                    st.session_state.last_save_message = (
+                        "Responses saved successfully."
+                        if lang == "en"
+                        else "Respuestas guardadas correctamente."
+                    )
+                    st.rerun()
+                except Exception as exc:
+                    st.error(f"Could not save responses: {exc}")
 
-                derived = {}
-                if section == "Food Insecurity":
-                    raw, cat = fs_category(fresh_snapshot)
-                    derived["food_security_raw_score"] = raw
-                    derived["food_security_category"] = cat
-
-                record = {
-                    "meta": {
-                        "completed_at": now_iso(),
-                        "instrument": "SDoH Bilingual Full (Streamlit) v1.0",
-                        "language": lang,
-                    },
-                    "sections": {section: section_answers},
-                    "derived": derived,
-                }
-
-                save_all_outputs(record)
-
-                # ✅ mark section as completed + rerun so header updates to 🟩 immediately
-                if section not in st.session_state.completed_sections:
+st.markdown("---")
+final_cols = st.columns([3, 1])
+with final_cols[1]:
+    final_label = "Submit completed survey" if lang == "en" else "Enviar encuesta completa"
+    if st.button(final_label, key="submit_completed_survey"):
+        try:
+            save_current_responses("completed")
+            for section in seen_sections:
+                if section_visible.get(section) and section not in st.session_state.completed_sections:
                     st.session_state.completed_sections.append(section)
-
-                st.success("✅ Section saved." if lang == "en" else "✅ Sección guardada.")
-                st.rerun()
+            st.session_state.last_save_message = (
+                "Responses saved successfully."
+                if lang == "en"
+                else "Respuestas guardadas correctamente."
+            )
+            st.rerun()
+        except Exception as exc:
+            st.error(f"Could not submit responses: {exc}")
 
 
 

@@ -11,6 +11,28 @@ streamlit run app.py
 
 Open the local Streamlit URL in a browser and allow microphone access when prompted.
 
+## Response storage
+
+Responses are saved persistently to `sdoh_responses.xlsx`. Each hospital writes
+to its own Excel sheet, and each save appends rows with timestamp, hospital,
+anonymous session ID, status (`partial` or `completed`), completion percentage,
+question/category, and response data.
+
+The workbook persistence layer is suitable for research/testing. For HIPAA or
+clinical use, move storage to a secure database with authentication, encryption,
+audit logs, backups, and access control.
+
+## Hospital-specific downloads
+
+The download page exports only the currently selected hospital. Configure a
+download password through an environment variable or Streamlit secret:
+
+```bash
+export SDOH_DOWNLOAD_PASSWORD="..."
+```
+
+Do not commit response workbooks, `.env` files, or Streamlit secrets.
+
 ## Voice features
 
 - Use the global language selector at the top to switch English / Spanish.
@@ -29,6 +51,19 @@ Click `Why this question?` below a question to show a concise explanation based 
 ```bash
 export OPENAI_API_KEY="..."
 export OPENAI_TRANSCRIPTION_MODEL="whisper-1"
+```
+
+## Optional Google Drive upload placeholder
+
+Drive upload is disabled by default and does not upload files until real Google
+Drive API integration is added. Future configuration should use environment
+variables or Streamlit secrets:
+
+```bash
+export GOOGLE_DRIVE_FOLDER_ID="..."
+export GOOGLE_SERVICE_ACCOUNT_JSON="..."
+# or
+export GOOGLE_APPLICATION_CREDENTIALS="/secure/path/service-account.json"
 ```
 
 ## Microphone notes
