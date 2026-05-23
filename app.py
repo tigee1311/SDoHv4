@@ -13,7 +13,6 @@ from storage import (
     RESPONSE_WORKBOOK,
     ensure_hospital_sheet,
     export_hospital_workbook_bytes,
-    get_existing_hospitals,
     load_hospital_data,
     sanitize_sheet_name,
     save_responses,
@@ -44,6 +43,7 @@ st.sidebar.title("Navigation")
 page = st.sidebar.radio("Go to", ["Survey", "Download Responses"])
 INSTRUMENT_NAME = "SDoH Bilingual Full (Streamlit) v1.0"
 DOWNLOAD_PASSWORD_SECRET = "SDOH_DOWNLOAD_PASSWORD"
+PLACEHOLDER_HOSPITALS = ("Hospital A", "Hospital B", "Hospital C", "Hospital D")
 
 
 def _get_config_value(name):
@@ -79,31 +79,21 @@ def _reset_survey_session(clear_hospital=True):
             st.session_state.pop(key, None)
 
 
-def _render_hospital_selection(title="Select Hospital", allow_new=True):
+def _render_hospital_selection(title="Select Hospital"):
     st.title(title)
     st.caption("Responses are stored separately by hospital in isolated Excel worksheets.")
 
-    existing_hospitals = get_existing_hospitals()
-    selected_existing = ""
-    new_hospital = ""
-
-    if existing_hospitals:
-        selected_existing = st.selectbox(
-            "Choose an existing hospital",
-            [""] + existing_hospitals,
-            format_func=lambda value: "Select a hospital" if value == "" else value,
-            key="hospital_existing_choice",
-        )
-    else:
-        st.info("No existing hospitals have saved responses yet.")
-
-    if allow_new:
-        new_hospital = st.text_input("Or enter a new hospital name", key="hospital_new_name")
+    selected_hospital = st.selectbox(
+        "Choose a hospital",
+        [""] + list(PLACEHOLDER_HOSPITALS),
+        format_func=lambda value: "Select a hospital" if value == "" else value,
+        key="hospital_existing_choice",
+    )
 
     if st.button("Continue", type="primary", key="continue_hospital_selection"):
-        hospital_name = (new_hospital or selected_existing or "").strip()
+        hospital_name = selected_hospital.strip()
         if not hospital_name:
-            st.error("Select an existing hospital or enter a new hospital name to continue.")
+            st.error("Select a hospital to continue.")
             return
 
         try:
@@ -124,7 +114,7 @@ def _render_download_page():
     st.title("Secure Download - Survey Responses")
 
     if not st.session_state.get("hospital_name"):
-        _render_hospital_selection("Select Hospital to Download Responses", allow_new=False)
+        _render_hospital_selection("Select Hospital to Download Responses")
         st.stop()
 
     hospital_name = st.session_state.hospital_name

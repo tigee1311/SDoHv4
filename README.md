@@ -18,6 +18,9 @@ to its own Excel sheet, and each save appends rows with timestamp, hospital,
 anonymous session ID, status (`partial` or `completed`), completion percentage,
 question/category, and response data.
 
+The app currently limits survey sessions to four placeholder hospital choices:
+`Hospital A`, `Hospital B`, `Hospital C`, and `Hospital D`.
+
 The workbook persistence layer is suitable for research/testing. For HIPAA or
 clinical use, move storage to a secure database with authentication, encryption,
 audit logs, backups, and access control.
