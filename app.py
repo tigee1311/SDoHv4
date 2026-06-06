@@ -1552,27 +1552,34 @@ st.markdown(
         z-index: 20;
         display: flex;
         justify-content: flex-end;
-        margin: 0 0 0.35rem 0;
+        box-sizing: border-box;
+        width: 100%;
+        margin: 0 0 0.5rem 0;
+        padding-right: 0.4rem;
+        pointer-events: none;
     }
     div.element-container:has(.section-save-anchor) + div.element-container div[data-testid="stButton"] {
         width: auto;
+        margin-left: auto;
+        pointer-events: auto;
     }
     div.element-container:has(.section-save-anchor) + div.element-container button {
-        min-width: 54px;
-        height: 26px;
+        min-width: 70px;
+        height: 34px;
         border-radius: 999px;
-        padding: 0 9px;
-        font-size: 0.7rem;
+        padding: 0 15px;
+        font-size: 0.8rem;
         font-weight: 600;
-        border: 1px solid rgba(49, 51, 63, 0.2);
-        background: rgba(255, 255, 255, 0.96);
-        color: rgb(49, 51, 63);
-        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.12);
-        opacity: 0.92;
+        border: 1px solid #15803d;
+        background: #16a34a;
+        color: #ffffff;
+        box-shadow: 0 5px 14px rgba(22, 163, 74, 0.28);
+        opacity: 0.96;
     }
     div.element-container:has(.section-save-anchor) + div.element-container button:hover {
         opacity: 1;
-        border-color: rgba(49, 51, 63, 0.34);
+        border-color: #166534;
+        background: #15803d;
     }
 </style>
 """,
