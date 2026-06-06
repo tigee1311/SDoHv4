@@ -1,76 +1,210 @@
 # SDoHv4
 
-Streamlit questionnaire for Social Determinants of Health research testing.
+SDoHv4 is a Streamlit research prototype for collecting Social Determinants of
+Health (SDoH) survey responses in English or Spanish. The app presents a
+branching, section-based questionnaire, supports voice input/output, saves
+partial or completed responses, and keeps response exports separated by
+selected hospital.
 
-## Run locally
+This repository is intended for research testing and expert review. It is not a
+clinical decision support tool and should not be used for production clinical
+workflows until the questionnaire, translations, data handling, privacy model,
+and administrative access controls have been formally reviewed.
+
+## Screenshots
+
+Hospital selection:
+
+![Hospital selection](docs/screenshots/hospital-selection.png)
+
+Survey workflow:
+
+![Survey workflow](docs/screenshots/survey-workflow.png)
+
+Admin/download workflow:
+
+![Admin/download workflow](docs/screenshots/admin-download.png)
+
+## What the chatbot does
+
+- Guides patients or research participants through a bilingual SDoH
+  questionnaire.
+- Groups questions into domains such as access to care, income, food security,
+  insurance, health literacy, demographics, discrimination, housing,
+  transportation, financial strain, social support, work, environment,
+  community resilience, tobacco, alcohol, and digital access.
+- Uses branching logic so follow-up questions appear only when relevant.
+- Shows progress based on required visible questions.
+- Lets users save each section independently with a sticky section save button.
+- Saves completed surveys as a separate final submission.
+- Stores responses in an Excel workbook, with one isolated worksheet per
+  hospital.
+- Provides a password-gated download page for hospital-specific CSV and Excel
+  exports.
+
+## Features implemented
+
+- 91-question bilingual question bank with English and Spanish labels.
+- Section expanders with partial save support.
+- Global English/Spanish language selector.
+- Browser microphone capture through Streamlit `audio_input` when available.
+- Speech-to-text using OpenAI Whisper when `OPENAI_API_KEY` is configured.
+- Local fallback transcription through `SpeechRecognition` for compatible WAV
+  audio.
+- Text-to-speech playback with `gTTS`.
+- "Why this question?" explanations maintained separately in
+  `explanations.py`.
+- Per-hospital Excel persistence in `storage.py`.
+- Hospital-specific downloads gated by `SDOH_DOWNLOAD_PASSWORD`.
+- Disabled-by-default Google Drive upload placeholder that reports status but
+  does not upload files.
+
+## What still needs expert review
+
+- Clinical and research validity of the full questionnaire.
+- Whether the question wording, branching logic, and required/optional rules
+  match the intended study protocol.
+- Spanish translations, health literacy level, and cultural appropriateness.
+- Whether demographic, SDoH, tobacco, alcohol, and discrimination questions
+  require consent language or additional participant protections.
+- Scoring, derived variables, and interpretation of collected responses.
+- HIPAA/privacy posture before collecting identifiable or protected health
+  information.
+- IRB, consent, retention, audit logging, and access-control requirements.
+- Admin workflow design, including role-based access and hospital onboarding.
+- Production storage. The current Excel workbook is suitable only for
+  prototype/research testing.
+- Google Drive or other cloud export behavior. The current Drive integration is
+  intentionally a placeholder and does not upload files.
+
+## Hospital and admin selection
+
+The app currently exposes four placeholder hospital choices:
+
+- `Hospital A`
+- `Hospital B`
+- `Hospital C`
+- `Hospital D`
+
+On first load, the user must choose a hospital before entering the survey. That
+hospital name is stored in Streamlit session state along with a generated
+anonymous session ID. All partial and final saves for that session are written
+to the selected hospital's worksheet inside `sdoh_responses.xlsx`.
+
+The sidebar includes a navigation control with two pages:
+
+- `Survey`: participant-facing questionnaire.
+- `Download Responses`: admin/export page.
+
+The download page prompts for hospital selection if none is active, then
+requires the configured `SDOH_DOWNLOAD_PASSWORD`. After the password is
+accepted, the page exports only the currently selected hospital's worksheet as
+CSV or Excel. There is no full role-based admin system yet; the password gate
+is a prototype control and needs security review before real deployment.
+
+## Local setup
+
+Use Python 3.10 or newer. Python 3.11 is recommended for deployment parity.
 
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/tigee1311/SDoHv4.git
+cd SDoHv4
+
+python3 -m venv .venv
+source .venv/bin/activate
+
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+```
+
+Run the app:
+
+```bash
 streamlit run app.py
 ```
 
-Open the local Streamlit URL in a browser and allow microphone access when prompted.
+Open the local Streamlit URL shown in the terminal. If using voice input, allow
+microphone access in the browser.
 
-## Response storage
+## Configuration
 
-Responses are saved persistently to `sdoh_responses.xlsx`. Each hospital writes
-to its own Excel sheet, and each save appends rows with timestamp, hospital,
-anonymous session ID, status (`partial` or `completed`), completion percentage,
-question/category, and response data.
+The app works without API keys for the basic survey and Excel persistence flow.
+Optional environment variables enable additional behavior:
 
-The app currently limits survey sessions to four placeholder hospital choices:
-`Hospital A`, `Hospital B`, `Hospital C`, and `Hospital D`.
+| Variable | Purpose |
+| --- | --- |
+| `SDOH_DOWNLOAD_PASSWORD` | Enables the password-gated hospital export page. |
+| `SDOH_RESPONSE_WORKBOOK` | Overrides the default local workbook path `sdoh_responses.xlsx`. |
+| `OPENAI_API_KEY` | Enables OpenAI Whisper transcription for browser audio. |
+| `OPENAI_TRANSCRIPTION_MODEL` | Optional transcription model override. Defaults to `whisper-1`. |
+| `GOOGLE_DRIVE_FOLDER_ID` | Future Drive upload target. Currently status-only. |
+| `GOOGLE_SERVICE_ACCOUNT_JSON` | Future Drive credentials. Currently status-only. |
+| `GOOGLE_APPLICATION_CREDENTIALS` | Future Drive credential file path. Currently status-only. |
 
-The workbook persistence layer is suitable for research/testing. For HIPAA or
-clinical use, move storage to a secure database with authentication, encryption,
-audit logs, backups, and access control.
-
-## Hospital-specific downloads
-
-The download page exports only the currently selected hospital. Configure a
-download password through an environment variable or Streamlit secret:
-
-```bash
-export SDOH_DOWNLOAD_PASSWORD="..."
-```
-
-Do not commit response workbooks, `.env` files, or Streamlit secrets.
-
-## Voice features
-
-- Use the global language selector at the top to switch English / Spanish.
-- Click `🔊` beside a question to hear the question read aloud.
-- Click `🎤` beside a question to open the recorder, record an answer, then click `Transcribe`.
-- Transcribed text fills the matching response field. For radio questions, the app chooses the closest option label.
-- Voice output uses gTTS by default and caches repeated audio prompts.
-- Voice input prefers OpenAI Whisper when `OPENAI_API_KEY` is set. Without that key, it falls back to `speech_recognition`.
-
-## Question explanations
-
-Click `Why this question?` below a question to show a concise explanation based on NIH and AMA social determinants of health guidance. The explanation text lives in `explanations.py` so it stays separate from the Streamlit UI code.
-
-## Optional API keys
+Example:
 
 ```bash
-export OPENAI_API_KEY="..."
-export OPENAI_TRANSCRIPTION_MODEL="whisper-1"
+export SDOH_DOWNLOAD_PASSWORD="change-me"
+export SDOH_RESPONSE_WORKBOOK="./local_sdoh_responses.xlsx"
+streamlit run app.py
 ```
 
-## Optional Google Drive upload placeholder
+For Streamlit Community Cloud, set secrets through the app settings rather than
+committing `.streamlit/secrets.toml`.
 
-Drive upload is disabled by default and does not upload files until real Google
-Drive API integration is added. Future configuration should use environment
-variables or Streamlit secrets:
+## Data storage and privacy
+
+By default, responses are written to `sdoh_responses.xlsx` in the project
+directory. This file is intentionally ignored by Git because it may contain
+research participant responses.
+
+Each save appends rows with:
+
+- timestamp
+- hospital name
+- anonymous session ID
+- save ID
+- save status (`partial` or `completed`)
+- completion percentage
+- language
+- instrument name
+- category
+- question IDs and text
+- response labels and response codes
+
+For clinical or regulated use, replace workbook persistence with an
+authenticated database, encryption, audit logs, backups, retention controls,
+and formal access management.
+
+## Fresh-clone smoke check
+
+From a clean checkout:
 
 ```bash
-export GOOGLE_DRIVE_FOLDER_ID="..."
-export GOOGLE_SERVICE_ACCOUNT_JSON="..."
-# or
-export GOOGLE_APPLICATION_CREDENTIALS="/secure/path/service-account.json"
+python -m py_compile app.py drive_upload.py explanations.py language_manager.py storage.py voice_input.py voice_output.py
+streamlit run app.py --server.headless true
 ```
 
-## Microphone notes
+The app should start without import errors, show the hospital selection screen,
+allow a hospital choice, render the survey, and create the configured response
+workbook only after a save action.
 
-Streamlit records through the browser, so local testing requires a browser with microphone permission. If you deploy remotely, users record audio in their own browser and the app transcribes that recording on the server.
+## Repository layout
 
-If OpenAI Whisper is not configured, the local fallback depends on the `speech_recognition` package and Google Web Speech recognition. For highest reliability in research testing, set `OPENAI_API_KEY`.
+```text
+app.py                 Streamlit UI and questionnaire flow
+storage.py             Hospital-isolated Excel persistence and exports
+language_manager.py    English/Spanish UI text helpers
+explanations.py        "Why this question?" explanation text
+voice_input.py         Browser audio capture and transcription helpers
+voice_output.py        Text-to-speech helper
+drive_upload.py        Disabled-by-default Drive upload placeholder
+requirements.txt       Runtime Python dependencies
+runtime.txt            Recommended Python runtime for hosted deployment
+```
+
+## Notes for deployment
+
+The current hosted app is expected to update when `main` is pushed to GitHub if
+it is connected through Streamlit Community Cloud. Configure secrets in the
+hosting provider, not in the repository.
