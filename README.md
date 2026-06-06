@@ -25,7 +25,7 @@ Admin/download workflow:
 
 ![Admin/download workflow](docs/screenshots/admin-download.png)
 
-## What the chatbot does
+## What the questionnaire does
 
 - Guides patients or research participants through a bilingual SDoH
   questionnaire.
@@ -48,9 +48,8 @@ Admin/download workflow:
 - Section expanders with partial save support.
 - Global English/Spanish language selector.
 - Browser microphone capture through Streamlit `audio_input` when available.
-- Speech-to-text using OpenAI Whisper when `OPENAI_API_KEY` is configured.
-- Local fallback transcription through `SpeechRecognition` for compatible WAV
-  audio.
+- Speech-to-text transcription through `SpeechRecognition` for compatible WAV
+  browser audio.
 - Text-to-speech playback with `gTTS`.
 - "Why this question?" explanations maintained separately in
   `explanations.py`.
@@ -87,9 +86,9 @@ The app currently exposes four placeholder hospital choices:
 - `Hospital D`
 
 On first load, the user must choose a hospital before entering the survey. That
-hospital name is stored in Streamlit session state along with a generated
-anonymous session ID. All partial and final saves for that session are written
-to the selected hospital's worksheet inside `sdoh_responses.xlsx`.
+hospital name is stored in Streamlit session state along with a random
+anonymous session ID. All partial and final saves for that session are written to
+the selected hospital's worksheet inside `sdoh_responses.xlsx`.
 
 The sidebar includes a navigation control with two pages:
 
@@ -128,15 +127,13 @@ microphone access in the browser.
 
 ## Configuration
 
-The app works without API keys for the basic survey and Excel persistence flow.
-Optional environment variables enable additional behavior:
+The app works without additional credentials for the basic survey and Excel
+persistence flow. Optional environment variables enable additional behavior:
 
 | Variable | Purpose |
 | --- | --- |
 | `SDOH_DOWNLOAD_PASSWORD` | Enables the password-gated hospital export page. |
 | `SDOH_RESPONSE_WORKBOOK` | Overrides the default local workbook path `sdoh_responses.xlsx`. |
-| `OPENAI_API_KEY` | Enables OpenAI Whisper transcription for browser audio. |
-| `OPENAI_TRANSCRIPTION_MODEL` | Optional transcription model override. Defaults to `whisper-1`. |
 | `GOOGLE_DRIVE_FOLDER_ID` | Future Drive upload target. Currently status-only. |
 | `GOOGLE_SERVICE_ACCOUNT_JSON` | Future Drive credentials. Currently status-only. |
 | `GOOGLE_APPLICATION_CREDENTIALS` | Future Drive credential file path. Currently status-only. |

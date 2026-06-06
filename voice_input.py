@@ -1,8 +1,6 @@
 """Speech-to-text helpers for Streamlit audio answers."""
 
 from io import BytesIO
-import os
-import tempfile
 import wave
 
 import speech_recognition as sr
@@ -31,31 +29,10 @@ def _wav_duration_seconds(audio_bytes):
         return None
 
 
-def transcribe_with_openai(audio_bytes, lang):
-    """Transcribe browser-recorded audio with OpenAI Whisper."""
-    api_key = os.getenv("OPENAI_API_KEY")
-    if not api_key:
-        raise RuntimeError("OPENAI_API_KEY is not set.")
-
-    from openai import OpenAI
-
-    suffix = ".wav" if _looks_like_wav(audio_bytes) else ".webm"
-    with tempfile.NamedTemporaryFile(suffix=suffix) as tmp:
-        tmp.write(audio_bytes)
-        tmp.flush()
-        with open(tmp.name, "rb") as audio_file:
-            transcript = OpenAI(api_key=api_key).audio.transcriptions.create(
-                model=os.getenv("OPENAI_TRANSCRIPTION_MODEL", "whisper-1"),
-                file=audio_file,
-                language=lang,
-            )
-    return getattr(transcript, "text", "").strip(), None
-
-
 def transcribe_with_speech_recognition(audio_bytes, lang):
-    """Fallback transcription using the local speech_recognition package."""
+    """Transcribe compatible browser-recorded audio."""
     if not _looks_like_wav(audio_bytes):
-        raise RuntimeError("Local speech_recognition fallback requires WAV audio.")
+        raise RuntimeError("Voice transcription requires WAV audio.")
 
     recognizer = sr.Recognizer()
     with sr.AudioFile(BytesIO(audio_bytes)) as source:
@@ -64,17 +41,13 @@ def transcribe_with_speech_recognition(audio_bytes, lang):
     return text.strip(), None
 
 
-def transcribe_audio(audio_file, lang, prefer_openai=True):
+def transcribe_audio(audio_file, lang):
     """Transcribe a Streamlit audio_input object and return text plus metadata."""
     audio_bytes = _read_audio_bytes(audio_file)
     if not audio_bytes:
         return "", {"engine": None, "confidence": None, "duration": None}
 
     duration = _wav_duration_seconds(audio_bytes)
-    if prefer_openai and os.getenv("OPENAI_API_KEY"):
-        text, confidence = transcribe_with_openai(audio_bytes, lang)
-        return text, {"engine": "openai_whisper", "confidence": confidence, "duration": duration}
-
     text, confidence = transcribe_with_speech_recognition(audio_bytes, lang)
     return text, {"engine": "speech_recognition_google", "confidence": confidence, "duration": duration}
 
