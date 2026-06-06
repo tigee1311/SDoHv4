@@ -13,6 +13,7 @@ from storage import (
     RESPONSE_WORKBOOK,
     ensure_hospital_sheet,
     export_hospital_workbook_bytes,
+    get_existing_hospitals,
     load_hospital_data,
     sanitize_sheet_name,
     save_responses,
@@ -79,13 +80,27 @@ def _reset_survey_session(clear_hospital=True):
             st.session_state.pop(key, None)
 
 
-def _render_hospital_selection(title="Select Hospital"):
+def _hospital_options(include_existing=True):
+    options = list(PLACEHOLDER_HOSPITALS)
+    if include_existing:
+        for hospital_name in get_existing_hospitals():
+            if hospital_name not in options:
+                options.append(hospital_name)
+    return options
+
+
+def _render_hospital_selection(title="Select Hospital", *, create_sheet=True):
     st.title(title)
     st.caption("Responses are stored separately by hospital in isolated Excel worksheets.")
 
+    hospital_options = _hospital_options()
+    if not hospital_options:
+        st.warning("No hospitals are available yet.")
+        return
+
     selected_hospital = st.selectbox(
         "Choose a hospital",
-        [""] + list(PLACEHOLDER_HOSPITALS),
+        [""] + hospital_options,
         format_func=lambda value: "Select a hospital" if value == "" else value,
         key="hospital_existing_choice",
     )
@@ -96,11 +111,13 @@ def _render_hospital_selection(title="Select Hospital"):
             st.error("Select a hospital to continue.")
             return
 
-        try:
-            sheet_name = ensure_hospital_sheet(hospital_name)
-        except Exception as exc:
-            st.error(f"Could not prepare hospital storage: {exc}")
-            return
+        sheet_name = sanitize_sheet_name(hospital_name)
+        if create_sheet:
+            try:
+                sheet_name = ensure_hospital_sheet(hospital_name)
+            except Exception as exc:
+                st.error(f"Could not prepare hospital storage: {exc}")
+                return
 
         _reset_survey_session(clear_hospital=False)
         st.session_state.hospital_name = hospital_name
@@ -114,7 +131,7 @@ def _render_download_page():
     st.title("Secure Download - Survey Responses")
 
     if not st.session_state.get("hospital_name"):
-        _render_hospital_selection("Select Hospital to Download Responses")
+        _render_hospital_selection("Select Hospital to Download Responses", create_sheet=False)
         st.stop()
 
     hospital_name = st.session_state.hospital_name
