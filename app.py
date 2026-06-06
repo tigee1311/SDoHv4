@@ -71,7 +71,7 @@ def _reset_survey_session(clear_hospital=True):
         if key.startswith(prefixes):
             del st.session_state[key]
 
-    for key in ["completed_sections", "last_answered_question", "auto_read_target", "last_save_message"]:
+    for key in ["completed_sections", "last_answered_question", "auto_read_target", "last_save_message", "active_section"]:
         st.session_state.pop(key, None)
 
     if clear_hospital:
@@ -1213,19 +1213,29 @@ st.markdown(
 st.caption(f"Hospital: {st.session_state.hospital_name} | Session ID: {st.session_state.session_id}")
 st.write("")
 
+def _mark_active_section(section):
+    if section:
+        st.session_state.active_section = section
+
+
 # ---- Radio helper with NO default selection ----
-def radio_force_click(label, options_labels, key):
+def radio_force_click(label, options_labels, key, section=None):
     """
     Creates a radio group with no preselected option (Streamlit >= 1.25).
     Returns the selected label or None (but we do not use the return here,
     we rely on session_state).
     """
+    radio_kwargs = {}
+    if section:
+        radio_kwargs = {"on_change": _mark_active_section, "args": (section,)}
+
     picked = st.radio(
         label or f"Answer for {key}",
         options_labels,
         index=None,
         key=f"radio_{key}",
         label_visibility="collapsed",
+        **radio_kwargs,
     )
     return picked if picked is not None else None
 
@@ -1355,12 +1365,18 @@ def _autoplay_audio(audio_bytes, mime="audio/mp3"):
         unsafe_allow_html=True,
     )
 
-def render_voice_controls(q, lang):
+def render_voice_controls(q, lang, section=None):
     """Render speaker and microphone controls for one question."""
     control_cols = st.columns([0.12, 0.12, 0.76])
 
     with control_cols[0]:
-        if st.button("🔊", key=f"speak_{q['id']}", help=t("speak", lang)):
+        if st.button(
+            "🔊",
+            key=f"speak_{q['id']}",
+            help=t("speak", lang),
+            on_click=_mark_active_section,
+            args=(section,),
+        ):
             try:
                 with st.spinner(t("tts_loading", lang)):
                     audio = synthesize_speech(question_with_explanation(q, lang), lang)
@@ -1369,12 +1385,24 @@ def render_voice_controls(q, lang):
                 st.warning(f"{t('tts_unavailable', lang)} {exc}")
 
     with control_cols[1]:
-        mic_open = st.toggle("🎤", key=f"mic_toggle_{q['id']}", help=t("record", lang), label_visibility="collapsed")
+        mic_open = st.toggle(
+            "🎤",
+            key=f"mic_toggle_{q['id']}",
+            help=t("record", lang),
+            label_visibility="collapsed",
+            on_change=_mark_active_section,
+            args=(section,),
+        )
 
     if mic_open:
         audio_file = streamlit_audio_input(t("record_answer", lang), key=f"audio_{q['id']}")
         if audio_file is not None:
-            if st.button(t("transcribe", lang), key=f"transcribe_{q['id']}"):
+            if st.button(
+                t("transcribe", lang),
+                key=f"transcribe_{q['id']}",
+                on_click=_mark_active_section,
+                args=(section,),
+            ):
                 try:
                     with st.spinner(t("transcribing", lang)):
                         transcript, meta = transcribe_audio(audio_file, lang)
@@ -1398,12 +1426,17 @@ def render_voice_controls(q, lang):
             caption += f" | {t('confidence', lang)}: {meta['confidence']:.2f}"
         st.caption(caption)
 
-def render_explanation_control(q, lang):
+def render_explanation_control(q, lang, section=None):
     """Show the authoritative explanation for a question on request."""
     explanation, source = explanation_for_question(q, lang)
     if not explanation:
         return
-    if st.button(t("why_question", lang), key=f"why_{q['id']}"):
+    if st.button(
+        t("why_question", lang),
+        key=f"why_{q['id']}",
+        on_click=_mark_active_section,
+        args=(section,),
+    ):
         st.info(f"{explanation}\n\n{t('source', lang)}: {source}")
 
 # Prepass snapshot from session_state (for section visibility)
@@ -1634,9 +1667,15 @@ for section in seen_sections:
         else f"{icon} {section_label} — {q_count} pregunta{'s' if q_count != 1 else ''}"
     )
 
-    with st.expander(label_text, expanded=False):
+    with st.expander(label_text, expanded=st.session_state.get("active_section") == section):
         st.markdown("<span class='section-save-anchor'></span>", unsafe_allow_html=True)
-        if st.button("Save", key=f"submit_section_{section}", help=f"Save {section_label}"):
+        if st.button(
+            "Save",
+            key=f"submit_section_{section}",
+            help=f"Save {section_label}",
+            on_click=_mark_active_section,
+            args=(section,),
+        ):
             try:
                 save_current_responses("partial", section=section)
 
@@ -1659,13 +1698,13 @@ for section in seen_sections:
                 f"<p style='margin-bottom:2px;'><strong>{qnum}) {label_txt}</strong></p>",
                 unsafe_allow_html=True,
             )
-            render_voice_controls(q, lang)
-            render_explanation_control(q, lang)
+            render_voice_controls(q, lang, section)
+            render_explanation_control(q, lang, section)
 
             if q["type"] == "radio":
                 opts = q["options"]
                 labels_local = [o[lang] for o in opts]
-                radio_force_click("", labels_local, key=q["id"])
+                radio_force_click("", labels_local, key=q["id"], section=section)
 
             elif q["type"] == "int":
                 st.number_input(
@@ -1675,12 +1714,16 @@ for section in seen_sections:
                     step=1,
                     key=f"num_{q['id']}",
                     label_visibility="collapsed",
+                    on_change=_mark_active_section,
+                    args=(section,),
                 )
             else:  # text
                 st.text_input(
                     f"Text answer for {q['id']}",
                     key=f"text_{q['id']}",
                     label_visibility="collapsed",
+                    on_change=_mark_active_section,
+                    args=(section,),
                 )
 
             if auto_read_next and st.session_state.last_answered_question == q["id"]:
