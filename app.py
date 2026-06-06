@@ -1548,14 +1548,14 @@ st.markdown(
 <style>
     div.element-container:has(.section-save-anchor) + div.element-container {
         position: sticky;
-        top: 3.25rem;
+        top: 3.75rem;
         z-index: 20;
         display: flex;
         justify-content: flex-end;
         box-sizing: border-box;
         width: 100%;
         margin: 0 0 0.5rem 0;
-        padding-right: 0.4rem;
+        padding: 0.35rem 0.4rem 0 0;
         pointer-events: none;
     }
     div.element-container:has(.section-save-anchor) + div.element-container div[data-testid="stButton"] {
