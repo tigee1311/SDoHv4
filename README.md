@@ -11,6 +11,21 @@ clinical decision support tool and should not be used for production clinical
 workflows until the questionnaire, translations, data handling, privacy model,
 and administrative access controls have been formally reviewed.
 
+## Project links
+
+- GitHub repository: [https://github.com/tigee1311/SDoHv4](https://github.com/tigee1311/SDoHv4)
+- Hosted SDoH questionnaire app: [https://sdohchatbot.streamlit.app/](https://sdohchatbot.streamlit.app/)
+- Deployment package for cloud handoff: `SDoHv4-deploy.zip`
+- Hospital selection screenshot: [docs/screenshots/hospital-selection.png](docs/screenshots/hospital-selection.png)
+- Survey workflow screenshot: [docs/screenshots/survey-workflow.png](docs/screenshots/survey-workflow.png)
+- Admin/download workflow screenshot: [docs/screenshots/admin-download.png](docs/screenshots/admin-download.png)
+
+## SDoH reference links
+
+- Healthy People 2030 SDoH overview: [https://odphp.health.gov/healthypeople/priority-areas/social-determinants-health](https://odphp.health.gov/healthypeople/priority-areas/social-determinants-health)
+- CDC SDoH overview: [https://www.cdc.gov/public-health-gateway/php/about/social-determinants-of-health.html](https://www.cdc.gov/public-health-gateway/php/about/social-determinants-of-health.html)
+- WHO SDoH topic page: [https://www.who.int/topics/health_equity/en/](https://www.who.int/topics/health_equity/en/)
+
 ## Screenshots
 
 Hospital selection:
