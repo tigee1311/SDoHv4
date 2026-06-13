@@ -91,7 +91,8 @@ def _hospital_options(include_existing=True):
 
 
 def _render_hospital_selection(title="Select Hospital", *, create_sheet=True):
-    st.title(title)
+    if title:
+        st.title(title)
     st.caption("Responses are stored separately by hospital in isolated Excel worksheets.")
 
     hospital_options = _hospital_options()
@@ -132,7 +133,7 @@ def _render_download_page():
     st.title("Secure Download - Survey Responses")
 
     if not st.session_state.get("hospital_name"):
-        _render_hospital_selection("Select Hospital to Download Responses", create_sheet=False)
+        _render_hospital_selection(None, create_sheet=False)
         st.stop()
 
     hospital_name = st.session_state.hospital_name
