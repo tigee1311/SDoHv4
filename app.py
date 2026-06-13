@@ -8,6 +8,7 @@ import re
 import uuid
 from drive_upload import drive_upload_configured, upload_files_to_drive
 from explanations import explanation_for_question, question_with_explanation
+from faq_chatbot import render_faq_chatbot
 from language_manager import selected_language, t
 from storage import (
     RESPONSE_WORKBOOK,
@@ -189,6 +190,8 @@ if st.session_state.get("hospital_name"):
     if st.sidebar.button("Change hospital / start new session"):
         _reset_survey_session(clear_hospital=True)
         st.rerun()
+
+render_faq_chatbot()
 
 if page == "Download Responses":
     _render_download_page()

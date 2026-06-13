@@ -1,0 +1,672 @@
+[
+  {
+    "id": "FAQ-001",
+    "category": "Purpose",
+    "question": "What is this chatbot for?",
+    "alternate_questions": [],
+    "answer": "This is a Social Determinants of Health questionnaire chatbot designed to ask patients about everyday life circumstances that affect health. It asks about social needs that may affect your health, such as food, housing, transportation, safety, and access to care. Your answers may help the care team understand what support could be useful.",
+    "source": "CDC SDoH, CMS HRSN",
+    "accuracy": "95%"
+  },
+  {
+    "id": "FAQ-002",
+    "category": "Purpose",
+    "question": "Why am I being asked these questions?",
+    "alternate_questions": [],
+    "answer": "These questions help identify nonmedical needs that can affect health and access to care. The goal is to better understand what support may help you.",
+    "source": "CDC SDoH, CMS HRSN",
+    "accuracy": "95%"
+  },
+  {
+    "id": "FAQ-003",
+    "category": "Purpose",
+    "question": "What does SDoH mean?",
+    "alternate_questions": [
+      "What is SDoH (Social determinants of health)?"
+    ],
+    "answer": "SDoH stands for Social Determinants of Health. These are nonmedical factors that influence a person’s health and well-being. It includes conditions such as housing, food, transportation, work, education, and safety, that can affect health and care access.",
+    "source": "CDC SDoH",
+    "accuracy": "80%"
+  },
+  {
+    "id": "FAQ-004",
+    "category": "Purpose",
+    "question": "What does HRSN mean?",
+    "alternate_questions": [
+      "What is HRSN?"
+    ],
+    "answer": "HRSN stands for Health-Related Social Needs. These are specific social and economic challenges that affect an individual's health and their ability to receive or benefit from healthcare. They are individual-level unmet needs. For example, food insecurity, housing instability, transportation barriers, financial strain, and social isolation.",
+    "source": "CMS HRSN",
+    "accuracy": "50%"
+  },
+  {
+    "id": "FAQ-005",
+    "category": "Purpose",
+    "question": "Is this chatbot part of my medical care?",
+    "alternate_questions": [],
+    "answer": "This chatbot may be used to help your care team understand social needs that could affect your health. It does not replace a medical visit, diagnosis, treatment plan, or emergency care.",
+    "source": "Hospital policy, clinical team",
+    "accuracy": "100%"
+  },
+  {
+    "id": "FAQ-006",
+    "category": "Purpose",
+    "question": "Is this chatbot a doctor?",
+    "alternate_questions": [],
+    "answer": "No. This chatbot is not a doctor and cannot diagnose or treat medical conditions. It helps your care provider to collect social information that is relevant to your health.",
+    "source": "Clinical safety language",
+    "accuracy": "20%"
+  },
+  {
+    "id": "FAQ-007",
+    "category": "Purpose",
+    "question": "Will this chatbot give me medical advice?",
+    "alternate_questions": [],
+    "answer": "This chatbot does not provide any medical advice. It assists your care team to collect health data related to social determinants of health.",
+    "source": "Clinical safety language",
+    "accuracy": "15%"
+  },
+  {
+    "id": "FAQ-008",
+    "category": "Purpose",
+    "question": "Why does my hospital care about things like food or housing?",
+    "alternate_questions": [],
+    "answer": "Food, housing, transportation, and safety can affect health, medication use, appointment attendance, stress, and recovery. Medical treatment alone often cannot overcome challenges that make it difficult for patients to stay healthy. Asking about these areas may help your care team connect you with support.",
+    "source": "CDC SDoH, CMS HRSN",
+    "accuracy": "70%"
+  },
+  {
+    "id": "FAQ-009",
+    "category": "Privacy",
+    "question": "Who can see my answers?",
+    "alternate_questions": [],
+    "answer": "Your answers will only be reviewed by your approved care team.",
+    "source": "HHS HIPAA, hospital policy",
+    "accuracy": "5%"
+  },
+  {
+    "id": "FAQ-010",
+    "category": "Privacy",
+    "question": "Are my answers private?",
+    "alternate_questions": [],
+    "answer": "All your answers are private and confidential. They are protected by the same privacy rules that apply to other health information.",
+    "source": "HHS HIPAA, hospital policy",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-011",
+    "category": "Privacy",
+    "question": "Will my answers go into my medical record?",
+    "alternate_questions": [],
+    "answer": "These responses are generally treated as part of your medical record and are protected by the same privacy rules that apply to other health information.\nPlease discuss with your doctor if you have any concerns.",
+    "source": "Hospital policy, IRB/study protocol",
+    "accuracy": "20%"
+  },
+  {
+    "id": "FAQ-012",
+    "category": "Privacy",
+    "question": "Will my doctor see my answers?",
+    "alternate_questions": [],
+    "answer": "Your answers are important to your care team. Please discuss with your doctor or care team if you have any concerns.",
+    "source": "Hospital policy",
+    "accuracy": "5%"
+  },
+  {
+    "id": "FAQ-013",
+    "category": "Privacy",
+    "question": "Will my insurance company see my answers?",
+    "alternate_questions": [],
+    "answer": "Your insurance company cannot see your answers. These responses are protected by the same privacy rules that apply to other health information.",
+    "source": "HHS HIPAA, hospital policy",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-014",
+    "category": "Privacy",
+    "question": "Can my employer see my answers?",
+    "alternate_questions": [],
+    "answer": "Your employer cannot see your answers. These responses are generally treated as part of your medical record and are protected by the same privacy rules that apply to other health information.",
+    "source": "HHS HIPAA, hospital policy",
+    "accuracy": "10%"
+  },
+  {
+    "id": "FAQ-015",
+    "category": "Privacy",
+    "question": "Will my family be able to see my answers?",
+    "alternate_questions": [],
+    "answer": "Your family will not see your answers automatically unless you explicitly grant them authorization. Ask the care team about your privacy options.",
+    "source": "HHS HIPAA, hospital policy",
+    "accuracy": "20%"
+  },
+  {
+    "id": "FAQ-016",
+    "category": "Privacy",
+    "question": "Can I answer privately without someone else seeing?",
+    "alternate_questions": [],
+    "answer": "Yes, you should complete the questions in a private place. If you need help or are worried someone may see your answers, ask a trusted care team member for assistance.",
+    "source": "Hospital workflow",
+    "accuracy": "100%"
+  },
+  {
+    "id": "FAQ-017",
+    "category": "Privacy",
+    "question": "Is my information being stored?",
+    "alternate_questions": [],
+    "answer": "Yes—your answers to this social determinants of health questionnaire are stored in your medical record.",
+    "source": "Hospital policy, IRB/study protocol",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-018",
+    "category": "Privacy",
+    "question": "How long will my answers be stored?",
+    "alternate_questions": [],
+    "answer": "Medical information usually are kept 5 to 10 years after the last visit. Please ask your care team about this.",
+    "source": "Hospital policy, IRB/study protocol",
+    "accuracy": "15%"
+  },
+  {
+    "id": "FAQ-019",
+    "category": "Privacy",
+    "question": "Can I delete my answers?",
+    "alternate_questions": [],
+    "answer": "You may not be able to fully delete your answers. But you can request (to your care team) a correction, update or clarification. Please discuss this with your care team.",
+    "source": "HHS HIPAA, hospital policy",
+    "accuracy": "10%"
+  },
+  {
+    "id": "FAQ-020",
+    "category": "Privacy",
+    "question": "Will my answers be used for research?",
+    "alternate_questions": [],
+    "answer": "Your answers can be used for research, but not automatically and not in a way that identifies you personally. They may be used only if\n- You explicitly consent to participate in a study; and\n- The research is approved by an Institutional Review Board (IRB); and\n- The data is used under strict privacy and security rules.",
+    "source": "IRB/study protocol",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-021",
+    "category": "Privacy",
+    "question": "Will my name be attached to my answers?",
+    "alternate_questions": [],
+    "answer": "Yes—in your hospital’s system, your name is attached to your social determinants of health (SDOH) answers",
+    "source": "Hospital policy, IRB/study protocol",
+    "accuracy": "5%"
+  },
+  {
+    "id": "FAQ-022",
+    "category": "Privacy",
+    "question": "Is this HIPAA compliant?",
+    "alternate_questions": [],
+    "answer": "Yes, your care team is a covered healthcare provider, and the social determinants of health (SDOH) data collection is HIPAA-compliant",
+    "source": "HHS HIPAA, IT/security team",
+    "accuracy": "5%"
+  },
+  {
+    "id": "FAQ-023",
+    "category": "Privacy",
+    "question": "Is this data encrypted?",
+    "alternate_questions": [],
+    "answer": "Yes—social determinants of health (SDOH) data is encrypted when it is stored and when it is transmitted.",
+    "source": "IT/security team",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-024",
+    "category": "Privacy",
+    "question": "Can I use a fake name?",
+    "alternate_questions": [],
+    "answer": "No—you should not use a fake name on a social determinants of health (SDOH) questionnaire because it needs to connect to your medical record.",
+    "source": "Hospital workflow, study protocol",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-025",
+    "category": "Consent",
+    "question": "Do I have to answer these questions?",
+    "alternate_questions": [],
+    "answer": "You are not require to answer, but answering helps your care team better support you. It is your choice, and you can decline or skip questions if you’re uncomfortable.",
+    "source": "Hospital policy, study protocol",
+    "accuracy": "50%"
+  },
+  {
+    "id": "FAQ-026",
+    "category": "Consent",
+    "question": "Can I skip a question?",
+    "alternate_questions": [],
+    "answer": "Yes—you may skip a question, but answering helps your care team better support you if you need resources. If you are uncomfortable answering, look for a skip option or ask the care team for help.",
+    "source": "Hospital workflow",
+    "accuracy": "50%"
+  },
+  {
+    "id": "FAQ-027",
+    "category": "Consent",
+    "question": "What happens if I do not answer?",
+    "alternate_questions": [],
+    "answer": "If you do not answer, the care team may have less information to connect you with helpful resources.",
+    "source": "Hospital workflow",
+    "accuracy": "40%"
+  },
+  {
+    "id": "FAQ-028",
+    "category": "Consent",
+    "question": "Can I stop using the chatbot?",
+    "alternate_questions": [],
+    "answer": "Yes—you can stop at any time. Under the HIPAA privacy framework, participation in this SDoH screening is voluntary.",
+    "source": "Hospital workflow, study protocol",
+    "accuracy": "30%"
+  },
+  {
+    "id": "FAQ-029",
+    "category": "Consent",
+    "question": "Will refusing to answer affect my care?",
+    "alternate_questions": [],
+    "answer": "Refusing to answer a social determinants of health (SDOH) questionnaire will not affect your medical treatment. Your care continues as normal. It is just that your care team has less information about barriers to your health.",
+    "source": "Hospital policy, study protocol",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-030",
+    "category": "Consent",
+    "question": "Can I change an answer after submitting it?",
+    "alternate_questions": [],
+    "answer": "Yes, you can ask your clinic or hospital to correct or update the information.",
+    "source": "System design, hospital workflow",
+    "accuracy": "20%"
+  },
+  {
+    "id": "FAQ-031",
+    "category": "Housing",
+    "question": "Why are you asking about my housing?",
+    "alternate_questions": [],
+    "answer": "- Housing instability can make it harder to store medications safely or recover after illness\n- Overcrowded or unsafe housing can increase health risks\n- Stable housing can improve follow-up care and treatment outcomes. Your answer may help the care team identify housing-related support.",
+    "source": "CDC SDoH, CMS HRSN",
+    "accuracy": "45%"
+  },
+  {
+    "id": "FAQ-032",
+    "category": "Housing",
+    "question": "What if I am homeless?",
+    "alternate_questions": [],
+    "answer": "If you do not have stable housing, the care team may be able to connect you with social work, shelter resources, housing navigation, or community programs.",
+    "source": "Local resource directory",
+    "accuracy": "85%"
+  },
+  {
+    "id": "FAQ-033",
+    "category": "Housing",
+    "question": "What if I am about to lose my housing?",
+    "alternate_questions": [],
+    "answer": "If you are worried about losing housing, sharing this information may help the care team\n- Connect you with a social worker immediately\n- Refer you to emergency housing or rental assistance programs.",
+    "source": "Local resource directory",
+    "accuracy": "90%"
+  },
+  {
+    "id": "FAQ-034",
+    "category": "Housing",
+    "question": "Why does housing affect my health?",
+    "alternate_questions": [],
+    "answer": "Housing affects health because it shapes the basic conditions your body and mind live in every day. It’s one of the strongest social determinants of health (SDOH) that healthcare systems look at. Housing can affect sleep, stress, safety, medication storage, hygiene, and the ability to keep appointments. Stable housing can make it easier to manage health needs.",
+    "source": "CDC SDoH",
+    "accuracy": "80%"
+  },
+  {
+    "id": "FAQ-035",
+    "category": "Housing",
+    "question": "Will you report my housing situation?",
+    "alternate_questions": [],
+    "answer": "Your housing situation will not be “reported” to outside authorities. It is kept confidential within the healthcare system and used only by your care team to help with your care.",
+    "source": "Hospital policy",
+    "accuracy": "20%"
+  },
+  {
+    "id": "FAQ-036",
+    "category": "Food",
+    "question": "Why are you asking if I have enough food?",
+    "alternate_questions": [],
+    "answer": "Food access can affect nutrition, energy, medication use, and management of health conditions. Your answer may help the care team connect you with food resources if needed.",
+    "source": "CDC SDoH, CMS HRSN",
+    "accuracy": "95%"
+  },
+  {
+    "id": "FAQ-037",
+    "category": "Food",
+    "question": "What if I cannot afford food?",
+    "alternate_questions": [],
+    "answer": "If you are having trouble affording food, your care team may connect you with a social worker; help you apply for food assistance programs (like SNAP); or refer you to food banks, meal programs, or community resources.",
+    "source": "Local resource directory",
+    "accuracy": "30%"
+  },
+  {
+    "id": "FAQ-038",
+    "category": "Food",
+    "question": "Will answering yes to food insecurity affect my benefits?",
+    "alternate_questions": [],
+    "answer": "It will not directly affect your benefits in a negative way.",
+    "source": "Local benefits office, hospital social work",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-039",
+    "category": "Food",
+    "question": "Why does food insecurity matter for health?",
+    "alternate_questions": [],
+    "answer": "Food insecurity matters for health because not having reliable access to enough nutritious food directly affects how the body functions, recovers, and manages disease.",
+    "source": "CDC SDoH, CMS HRSN",
+    "accuracy": "70%"
+  },
+  {
+    "id": "FAQ-040",
+    "category": "Food",
+    "question": "Can the hospital give me food today?",
+    "alternate_questions": [],
+    "answer": "Some hospitals or clinics may have food bags, vouchers, or referrals, but availability depends on the site. Please ask the care team what resources are available today.",
+    "source": "Hospital workflow, local resources",
+    "accuracy": "100%"
+  },
+  {
+    "id": "FAQ-041",
+    "category": "Transportation",
+    "question": "Why are you asking about transportation?",
+    "alternate_questions": [],
+    "answer": "Because getting to care is often just as important as the care itself. Transportation can affect whether a person can attend appointments, pick up medications, and receive follow-up care. Your answer may help the care team identify transportation support for you.",
+    "source": "CDC SDoH, CMS HRSN",
+    "accuracy": "95%"
+  },
+  {
+    "id": "FAQ-042",
+    "category": "Transportation",
+    "question": "What if I cannot get to my appointments?",
+    "alternate_questions": [],
+    "answer": "If transportation is a problem, the care team may be able to suggest ride / voucher programs, hospital-arranged transportation, public transit support, telehealth options, or appointment scheduling help.",
+    "source": "Local resource directory",
+    "accuracy": "85%"
+  },
+  {
+    "id": "FAQ-043",
+    "category": "Transportation",
+    "question": "Can you give me a ride?",
+    "alternate_questions": [],
+    "answer": "This chatbot cannot physically give you a ride. However, your care team may be able to connect you with available transportation services if you report that you need help.",
+    "source": "Hospital workflow, local resources",
+    "accuracy": "50%"
+  },
+  {
+    "id": "FAQ-044",
+    "category": "Transportation",
+    "question": "Why does transportation affect health?",
+    "alternate_questions": [],
+    "answer": "Transportation barriers can delay appointments, medication pickup, diagnostic testing/screeniing, follow-up care, and access to community services.",
+    "source": "CMS HRSN",
+    "accuracy": "90%"
+  },
+  {
+    "id": "FAQ-045",
+    "category": "Transportation",
+    "question": "What if I do not have a car?",
+    "alternate_questions": [],
+    "answer": "Not having a car is common and may affect care access. The care team may be able to discuss public transit, ride services, community programs, or telehealth options.",
+    "source": "Local resource directory",
+    "accuracy": "100%"
+  },
+  {
+    "id": "FAQ-046",
+    "category": "Utilities",
+    "question": "Why are you asking about utilities?",
+    "alternate_questions": [],
+    "answer": "Utilities such as electricity, heat, cooling, and water can affect your ability to stay healthy and safely manage medical care. Your answer may help identify support needs.",
+    "source": "CMS HRSN, local resources",
+    "accuracy": "70%"
+  },
+  {
+    "id": "FAQ-047",
+    "category": "Utilities",
+    "question": "What if my electricity or water is about to be shut off?",
+    "alternate_questions": [],
+    "answer": "If you are at risk of a utility shutoff, the care team may connect you with utility assistance programs, social work, or local community resources.",
+    "source": "Local resource directory",
+    "accuracy": "100%"
+  },
+  {
+    "id": "FAQ-048",
+    "category": "Utilities",
+    "question": "Can the hospital help pay my utility bill?",
+    "alternate_questions": [],
+    "answer": "The hospital may not directly pay your utility bills, but staff can connect you to emergency financial assistance programs that may help cover utilities..",
+    "source": "Hospital social work, local resources",
+    "accuracy": "40%"
+  },
+  {
+    "id": "FAQ-049",
+    "category": "Utilities",
+    "question": "Why does heat or air conditioning matter for health?",
+    "alternate_questions": [],
+    "answer": "Heat and air conditioning are basic health protections that help the body maintain safe temperature, support recovery, and prevent serious illness. Extreme heat or cold can worsen health risks, especially for some medical conditions. Safe temperature, electricity, and water access can support health and daily living.",
+    "source": "Clinical review, CDC environmental health",
+    "accuracy": "90%"
+  },
+  {
+    "id": "FAQ-050",
+    "category": "Safety",
+    "question": "Why are you asking if I feel safe?",
+    "alternate_questions": [],
+    "answer": "Safety at home, in relationships or in the community has a direct impact on physical and mental health. It can affect stress, injury risk, mental health, and ability to seek care. Your answer may help the care team offer support.",
+    "source": "Clinical safety protocol",
+    "accuracy": "80%"
+  },
+  {
+    "id": "FAQ-051",
+    "category": "Safety",
+    "question": "What if I am in immediate danger?",
+    "alternate_questions": [],
+    "answer": "If you are in immediate danger, treat this as an emergency first, not a questionnaire or chat situation. Tell the staff member “I am in immediate danger,” or call 911 immediately.",
+    "source": "Emergency protocol",
+    "accuracy": "40%"
+  },
+  {
+    "id": "FAQ-052",
+    "category": "Safety",
+    "question": "Will you tell someone if I say I am unsafe?",
+    "alternate_questions": [],
+    "answer": "Your care team will try to contact you, to follow up, assess your needs, and offer support. If you are worried about privacy, ask a care team member how safety-related answers are handled.",
+    "source": "Hospital policy, mandated reporting rules",
+    "accuracy": "60%"
+  },
+  {
+    "id": "FAQ-053",
+    "category": "Safety",
+    "question": "What if someone is watching me answer?",
+    "alternate_questions": [],
+    "answer": "If someone may be watching your answers and you feel unsafe, stop using this chatbot and seek help from a trusted person, care team member, or emergency service when safe to do so.",
+    "source": "Clinical safety protocol",
+    "accuracy": "100%"
+  },
+  {
+    "id": "FAQ-054",
+    "category": "Safety",
+    "question": "Can I get help for domestic violence?",
+    "alternate_questions": [],
+    "answer": "Healthcare teams are trained to respond to this immediately and privately. The care team can connect you with a social worker or domestic violence advocate, safe housing/shelters, a safety plan, They can provide medical care for any injuries or health, and crisis counseling or mental health support.",
+    "source": "Local DV resources, clinical protocol",
+    "accuracy": "10%"
+  },
+  {
+    "id": "FAQ-055",
+    "category": "Mental Health",
+    "question": "Why are you asking about stress or emotional support?",
+    "alternate_questions": [],
+    "answer": "Mental and social well-being are closely tied to physical health and recovery. Stress, loneliness, and lack of support can affect physical health, mental health, and the ability to manage care. Your answer may help the care team suggest supportive resources.",
+    "source": "CDC SDoH, clinical review",
+    "accuracy": "99%"
+  },
+  {
+    "id": "FAQ-056",
+    "category": "Mental Health",
+    "question": "Is this chatbot for mental health treatment?",
+    "alternate_questions": [],
+    "answer": "This SDOH questionnaire chatbot is not a mental health treatment tool. Its main purpose is to screen for life circumstances that affect your health—like housing, food, transportation, safety, stress, and support. Please contact your care team for help.",
+    "source": "Clinical safety language",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-057",
+    "category": "Mental Health",
+    "question": "What if I feel like hurting myself?",
+    "alternate_questions": [],
+    "answer": "If you may hurt yourself or someone else, call emergency services (911) or a crisis hotline immediately (988) . Or tell the care team staff immediately.",
+    "source": "Crisis protocol, hospital policy",
+    "accuracy": "60%"
+  },
+  {
+    "id": "FAQ-058",
+    "category": "Mental Health",
+    "question": "Will I be judged for saying I am stressed?",
+    "alternate_questions": [],
+    "answer": "No. You will not be judged. These questions are designed for care and support, not evaluation of your character. The purpose is to understand what support may help you. Stress is common, and sharing concerns can help the care team connect you with appropriate resources.",
+    "source": "Clinical review",
+    "accuracy": "80%"
+  },
+  {
+    "id": "FAQ-059",
+    "category": "Mental Health",
+    "question": "Can the chatbot help me find counseling?",
+    "alternate_questions": [],
+    "answer": "The chatbot will alert your care team, who will connect you with a social worker or care coordinator who can provide information regarding counseling or therapy services. Please discuss this with your care team.",
+    "source": "Hospital workflow, local resources",
+    "accuracy": "30%"
+  },
+  {
+    "id": "FAQ-060",
+    "category": "Employment and Money",
+    "question": "Why are you asking about work or income?",
+    "alternate_questions": [],
+    "answer": "Money and employment strongly shape a person’s ability to stay healthy and follow medical care. Work, income, and financial strain can affect access to food, housing, medications, transportation, and care. Your answer may help identify resources that could support your health.",
+    "source": "CDC SDoH, CMS HRSN",
+    "accuracy": "95%"
+  },
+  {
+    "id": "FAQ-061",
+    "category": "Employment and Money",
+    "question": "Will this affect my job?",
+    "alternate_questions": [],
+    "answer": "No—your answer about work or employment on an SDOH questionnaire will not affect your job. Your employer cannot see your answers. Your answers are protected by the same privacy rules that apply to other health information.",
+    "source": "HHS HIPAA, hospital policy",
+    "accuracy": "10%"
+  },
+  {
+    "id": "FAQ-062",
+    "category": "Employment and Money",
+    "question": "Can the hospital help me find a job?",
+    "alternate_questions": [],
+    "answer": "The hospital does not directly provide employment, but staff may be able to refer you to workforce programs, social services, or community organizations.",
+    "source": "Local resource directory",
+    "accuracy": "100%"
+  },
+  {
+    "id": "FAQ-063",
+    "category": "Employment and Money",
+    "question": "Why are you asking if I can afford medications?",
+    "alternate_questions": [],
+    "answer": "Cost is one of the most common reasons people don’t take prescriptions as directed, and that directly affects health outcomes. Your answer may help the care team discuss lower-cost options, assistance programs, or pharmacy support.",
+    "source": "Clinical review, hospital pharmacy",
+    "accuracy": "60%"
+  },
+  {
+    "id": "FAQ-064",
+    "category": "Employment and Money",
+    "question": "What if I cannot pay for care?",
+    "alternate_questions": [],
+    "answer": "If cost is a concern, ask the care team about financial assistance, insurance navigation, payment options, or community programs. Availability depends on the hospital and your situation.",
+    "source": "Hospital financial assistance policy",
+    "accuracy": "100%"
+  },
+  {
+    "id": "FAQ-065",
+    "category": "Access to Care",
+    "question": "Why are you asking if I have a primary doctor?",
+    "alternate_questions": [],
+    "answer": "Having a primary care doctor means you have a consistent source of care that strongly affects your long-term health. A primary care doctor can help coordinate preventive care, chronic condition management, referrals, and follow-up. If you do not have one, the care team may be able to suggest options.",
+    "source": "Clinical review",
+    "accuracy": "90%"
+  },
+  {
+    "id": "FAQ-066",
+    "category": "Access to Care",
+    "question": "What if I do not have insurance?",
+    "alternate_questions": [],
+    "answer": "If you do not have insurance, the care team can help you find coverage options or reduce costs so you can still get care. They may be able to connect you with enrollment help, financial assistance, community clinics, or other local resources.",
+    "source": "Local resource directory",
+    "accuracy": "80%"
+  },
+  {
+    "id": "FAQ-067",
+    "category": "Access to Care",
+    "question": "Can this chatbot schedule an appointment?",
+    "alternate_questions": [],
+    "answer": "This SDOH questionnaire chatbot is mainly designed to screen for needs (like housing, food, transportation, insurance) and then route you to the right help. Ask the care team regarding appointment.",
+    "source": "System design, hospital workflow",
+    "accuracy": "10%"
+  },
+  {
+    "id": "FAQ-068",
+    "category": "Access to Care",
+    "question": "Can I use this instead of calling the clinic?",
+    "alternate_questions": [],
+    "answer": "This SDOH questionnaire chatbot is mainly a screening tool to help the care team collect social information that may influence health. It is not a substitute for calling the clinic for urgent needs, scheduling, medication questions, or personal medical advice.",
+    "source": "Hospital workflow",
+    "accuracy": "60%"
+  },
+  {
+    "id": "FAQ-069",
+    "category": "Access to Care",
+    "question": "What if I do not understand a medical question?",
+    "alternate_questions": [],
+    "answer": "If a question is unclear, you can ask the chatbot to explain it in plain language, or provide examples; or we can connect you to a care team staff..",
+    "source": "Hospital workflow",
+    "accuracy": "40%"
+  },
+  {
+    "id": "FAQ-070",
+    "category": "Language and Accessibility",
+    "question": "Can I use this in another language?",
+    "alternate_questions": [],
+    "answer": "You can select English or Spanish for this questionnaire. If you need to use a different language, please contact your care team.",
+    "source": "Hospital accessibility policy",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-071",
+    "category": "Language and Accessibility",
+    "question": "Can someone help me fill this out?",
+    "alternate_questions": [],
+    "answer": "Yes. You are allowed to ask someone to help you fill out this SDOH (Social Determinants of Health) questionnaire",
+    "source": "Hospital workflow",
+    "accuracy": "20%"
+  },
+  {
+    "id": "FAQ-072",
+    "category": "Language and Accessibility",
+    "question": "I cannot see the questions well.",
+    "alternate_questions": [],
+    "answer": "If you have difficulty reading the questions, this chatbot can ask the questions to you and guide you through them one at a time. Or you can ask the care team for a human assistant. If you prefer to read, you can click on the larger-font button (located at upper right corner).",
+    "source": "Hospital accessibility policy",
+    "accuracy": "0%"
+  },
+  {
+    "id": "FAQ-073",
+    "category": "Language and Accessibility",
+    "question": "Can the chatbot read the questions out loud?",
+    "alternate_questions": [],
+    "answer": "Yes, the chatbot can read each question out loud using the voice/audio button.",
+    "source": "System design",
+    "accuracy": "20%"
+  },
+  {
+    "id": "FAQ-084",
+    "category": "Question Selection",
+    "question": "Why are there so many questions?",
+    "alternate_questions": [],
+    "answer": "The questions are designed to identify different types of social needs that may affect health. Some sites may use shorter or longer sets depending on their program.",
+    "source": "CMS HRSN, hospital workflow",
+    "accuracy": ""
+  }
+]

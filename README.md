@@ -51,6 +51,8 @@ Admin/download workflow:
 - Uses branching logic so follow-up questions appear only when relevant.
 - Shows progress based on required visible questions.
 - Lets users save each section independently with a sticky section save button.
+- Provides a bottom-right SDoH FAQ chat control that matches user questions to
+  local reviewed answers.
 - Saves completed surveys as a separate final submission.
 - Stores responses in an Excel workbook, with one isolated worksheet per
   hospital.
@@ -68,6 +70,9 @@ Admin/download workflow:
 - Text-to-speech playback with `gTTS`.
 - "Why this question?" explanations maintained separately in
   `explanations.py`.
+- Local FAQ matching in `faq_chatbot.py` using `faq_answers.json`. The FAQ
+  library excludes yellow-highlighted rows from the review document and omits
+  `FAQ-093` onward.
 - Per-hospital Excel persistence in `storage.py`.
 - Hospital-specific downloads gated by `SDOH_DOWNLOAD_PASSWORD`.
 - Disabled-by-default Google Drive upload placeholder that reports status but
@@ -205,6 +210,8 @@ workbook only after a save action.
 
 ```text
 app.py                 Streamlit UI and questionnaire flow
+faq_chatbot.py         Local reviewed-answer FAQ matcher and floating chat UI
+faq_answers.json       Approved FAQ answer library used by the chatbot
 storage.py             Hospital-isolated Excel persistence and exports
 language_manager.py    English/Spanish UI text helpers
 explanations.py        "Why this question?" explanation text
