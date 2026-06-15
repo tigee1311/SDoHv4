@@ -24,8 +24,10 @@ from openpyxl import Workbook, load_workbook
 
 RESPONSE_WORKBOOK = Path(os.getenv("SDOH_RESPONSE_WORKBOOK", "sdoh_responses.xlsx"))
 HOSPITAL_INDEX_SHEET = "_hospitals"
+SECTION_SETTINGS_SHEET = "_hospital_sections"
 
 HOSPITAL_INDEX_COLUMNS = ["hospital_name", "sheet_name", "created_at"]
+SECTION_SETTINGS_COLUMNS = ["hospital_name", "updated_at", "enabled_sections_json"]
 RESPONSE_COLUMNS = [
     "timestamp",
     "hospital_name",
@@ -212,6 +214,110 @@ def export_hospital_workbook_bytes(
     return output.getvalue()
 
 
+def load_hospital_section_settings(
+    hospital_name: str,
+    workbook_path: str | Path = RESPONSE_WORKBOOK,
+) -> list[str] | None:
+    """Return saved enabled survey sections for a hospital, or None for default-all."""
+    path = Path(workbook_path)
+    if not path.exists():
+        return None
+
+    try:
+        wb = load_workbook(path, read_only=True, data_only=True)
+    except Exception:
+        return None
+
+    try:
+        if SECTION_SETTINGS_SHEET not in wb.sheetnames:
+            return None
+
+        ws = wb[SECTION_SETTINGS_SHEET]
+        rows = list(ws.iter_rows(values_only=True))
+        if not rows:
+            return None
+
+        header = [str(value) if value is not None else "" for value in rows[0]]
+        if "hospital_name" not in header or "enabled_sections_json" not in header:
+            return None
+
+        name_idx = header.index("hospital_name")
+        sections_idx = header.index("enabled_sections_json")
+        display_name = _normalize_hospital_name(hospital_name)
+        for row in rows[1:]:
+            if len(row) <= max(name_idx, sections_idx):
+                continue
+            saved_name = "" if row[name_idx] is None else str(row[name_idx]).strip()
+            if saved_name.casefold() != display_name.casefold():
+                continue
+            raw_sections = row[sections_idx]
+            if raw_sections in (None, ""):
+                return None
+            try:
+                sections = json.loads(str(raw_sections))
+            except json.JSONDecodeError:
+                return None
+            if not isinstance(sections, list):
+                return None
+            return [str(section).strip() for section in sections if str(section).strip()]
+
+        return None
+    finally:
+        wb.close()
+
+
+def save_hospital_section_settings(
+    hospital_name: str,
+    enabled_sections: list[str],
+    workbook_path: str | Path = RESPONSE_WORKBOOK,
+) -> dict[str, Any]:
+    """Persist enabled survey sections for the selected hospital."""
+    display_name = _normalize_hospital_name(hospital_name)
+    sections = [str(section).strip() for section in enabled_sections if str(section).strip()]
+    if not sections:
+        raise ValueError("At least one section must be selected")
+
+    path = Path(workbook_path)
+    wb = _load_or_create_workbook(path)
+    timestamp = now_iso()
+
+    try:
+        _ensure_hospital_sheet_in_workbook(wb, display_name)
+        ws = _ensure_section_settings_sheet(wb)
+        header = _ensure_headers(ws, SECTION_SETTINGS_COLUMNS)
+        name_idx = header.index("hospital_name") + 1
+        updated_idx = header.index("updated_at") + 1
+        sections_idx = header.index("enabled_sections_json") + 1
+
+        saved = False
+        encoded_sections = json.dumps(sections, ensure_ascii=False)
+        for row_idx in range(2, ws.max_row + 1):
+            saved_name = ws.cell(row=row_idx, column=name_idx).value
+            saved_name = "" if saved_name is None else str(saved_name).strip()
+            if saved_name.casefold() == display_name.casefold():
+                ws.cell(row=row_idx, column=updated_idx, value=timestamp)
+                ws.cell(row=row_idx, column=sections_idx, value=encoded_sections)
+                saved = True
+                break
+
+        if not saved:
+            row = {column: "" for column in header}
+            row["hospital_name"] = display_name
+            row["updated_at"] = timestamp
+            row["enabled_sections_json"] = encoded_sections
+            ws.append([row.get(column, "") for column in header])
+
+        _atomic_save_workbook(wb, path)
+        return {
+            "workbook_path": str(path),
+            "hospital_name": display_name,
+            "updated_at": timestamp,
+            "enabled_sections": sections,
+        }
+    finally:
+        wb.close()
+
+
 def _normalize_hospital_name(hospital_name: str) -> str:
     name = re.sub(r"\s+", " ", hospital_name or "").strip()
     if not name:
@@ -239,6 +345,17 @@ def _ensure_hospital_index(wb) -> Any:
 
     ws = wb[HOSPITAL_INDEX_SHEET]
     _ensure_headers(ws, HOSPITAL_INDEX_COLUMNS)
+    return ws
+
+
+def _ensure_section_settings_sheet(wb) -> Any:
+    if SECTION_SETTINGS_SHEET not in wb.sheetnames:
+        ws = wb.create_sheet(SECTION_SETTINGS_SHEET)
+        ws.append(SECTION_SETTINGS_COLUMNS)
+        return ws
+
+    ws = wb[SECTION_SETTINGS_SHEET]
+    _ensure_headers(ws, SECTION_SETTINGS_COLUMNS)
     return ws
 
 

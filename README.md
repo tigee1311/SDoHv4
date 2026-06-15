@@ -53,6 +53,9 @@ Admin/download workflow:
 - Lets users save each section independently with a sticky section save button.
 - Provides a bottom-right SDoH FAQ chat control that matches user questions to
   local reviewed answers.
+- Lets hospitals password-protect and save which questionnaire sections they
+  want to administer. Hospitals without saved settings receive the full default
+  questionnaire.
 - Saves completed surveys as a separate final submission.
 - Stores responses in an Excel workbook, with one isolated worksheet per
   hospital.
@@ -74,6 +77,8 @@ Admin/download workflow:
   library excludes yellow-highlighted rows from the review document and omits
   `FAQ-093` onward.
 - Per-hospital Excel persistence in `storage.py`.
+- Per-hospital section settings stored in the hidden `_hospital_sections`
+  worksheet of the response workbook.
 - Hospital-specific downloads gated by `SDOH_DOWNLOAD_PASSWORD`.
 - Disabled-by-default Google Drive upload placeholder that reports status but
   does not upload files.

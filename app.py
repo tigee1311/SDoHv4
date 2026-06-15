@@ -15,8 +15,10 @@ from storage import (
     ensure_hospital_sheet,
     export_hospital_workbook_bytes,
     get_existing_hospitals,
+    load_hospital_section_settings,
     load_hospital_data,
     sanitize_sheet_name,
+    save_hospital_section_settings,
     save_responses,
 )
 from voice_input import streamlit_audio_input, transcribe_audio
@@ -42,7 +44,7 @@ if "completed_sections" not in st.session_state:
 # Sidebar Navigation
 # =========================
 st.sidebar.title("Navigation")
-page = st.sidebar.radio("Go to", ["Survey", "Download Responses"])
+page = st.sidebar.radio("Go to", ["Survey", "Download Responses", "Question Sections"])
 INSTRUMENT_NAME = "SDoH Bilingual Full (Streamlit) v1.0"
 DOWNLOAD_PASSWORD_SECRET = "SDOH_DOWNLOAD_PASSWORD"
 PLACEHOLDER_HOSPITALS = ("Hospital A", "Hospital B", "Hospital C", "Hospital D")
@@ -184,6 +186,91 @@ def _render_download_page():
         if st.button("Check Drive Upload Status"):
             result = upload_files_to_drive([RESPONSE_WORKBOOK])
             st.info(result["message"])
+
+
+def _section_checkbox_key(hospital_name, section_name):
+    safe_hospital = sanitize_sheet_name(hospital_name)
+    safe_section = re.sub(r"[^A-Za-z0-9]+", "_", section_name).strip("_")
+    return f"section_enabled_{safe_hospital}_{safe_section}"
+
+
+def _render_section_settings_page(section_summaries):
+    st.title("Hospital Question Sections")
+
+    if not st.session_state.get("hospital_name"):
+        _render_hospital_selection("Select Hospital to Configure Questions", create_sheet=True)
+        st.stop()
+
+    hospital_name = st.session_state.hospital_name
+    st.info(f"Current hospital: {hospital_name}")
+
+    password = _get_config_value(DOWNLOAD_PASSWORD_SECRET)
+    if not password:
+        st.warning(
+            "Question section editing is disabled until SDOH_DOWNLOAD_PASSWORD is configured "
+            "as an environment variable or Streamlit secret."
+        )
+        st.stop()
+
+    pw_input = st.text_input("Password", type="password", key="section_settings_password")
+    if pw_input == "":
+        st.info("Enter password to edit this hospital's question sections.")
+        st.stop()
+    if pw_input != password:
+        st.error("Incorrect password.")
+        st.stop()
+
+    saved_sections = load_hospital_section_settings(hospital_name)
+    all_sections = [section for section, _count in section_summaries]
+    default_sections = set(saved_sections or all_sections)
+
+    if saved_sections is None:
+        st.caption("No custom section list is saved. This hospital currently receives the full questionnaire.")
+    else:
+        st.caption(f"{len(saved_sections)} section{'s' if len(saved_sections) != 1 else ''} currently saved.")
+
+    for section_name in all_sections:
+        key = _section_checkbox_key(hospital_name, section_name)
+        if key not in st.session_state:
+            st.session_state[key] = section_name in default_sections
+
+    select_cols = st.columns([1, 1, 4])
+    with select_cols[0]:
+        if st.button("Use all sections", key="section_settings_all"):
+            for section_name in all_sections:
+                st.session_state[_section_checkbox_key(hospital_name, section_name)] = True
+    with select_cols[1]:
+        if st.button("Clear all", key="section_settings_clear"):
+            for section_name in all_sections:
+                st.session_state[_section_checkbox_key(hospital_name, section_name)] = False
+
+    checkbox_columns = st.columns(2)
+    for index, (section_name, question_count) in enumerate(section_summaries):
+        label = f"{section_name} — {question_count} question{'s' if question_count != 1 else ''}"
+        with checkbox_columns[index % 2]:
+            st.checkbox(label, key=_section_checkbox_key(hospital_name, section_name))
+
+    selected_sections = [
+        section_name
+        for section_name in all_sections
+        if st.session_state.get(_section_checkbox_key(hospital_name, section_name), False)
+    ]
+    st.caption(f"{len(selected_sections)} of {len(all_sections)} sections selected.")
+
+    if st.button("Save question sections", type="primary", key="save_section_settings"):
+        if not selected_sections:
+            st.error("Select at least one question section.")
+            return
+        try:
+            save_hospital_section_settings(hospital_name, selected_sections)
+            st.session_state.completed_sections = [
+                section
+                for section in st.session_state.get("completed_sections", [])
+                if section in selected_sections
+            ]
+            st.success("Question sections saved successfully.")
+        except Exception as exc:
+            st.error(f"Could not save question sections: {exc}")
 
 
 if st.session_state.get("hospital_name"):
@@ -1192,6 +1279,24 @@ add_q(
     options=YN,
 )
 
+
+def _section_summaries():
+    summaries = []
+    for question in QUESTIONS:
+        section_name = question["section"]
+        matching = next((item for item in summaries if item["section"] == section_name), None)
+        if matching is None:
+            matching = {"section": section_name, "count": 0}
+            summaries.append(matching)
+        if question.get("branch") is None:
+            matching["count"] += 1
+    return [(item["section"], item["count"]) for item in summaries]
+
+
+if page == "Question Sections":
+    _render_section_settings_page(_section_summaries())
+    st.stop()
+
 # =========================
 # Streamlit UI
 # =========================
@@ -1486,6 +1591,13 @@ def snapshot_from_state():
 
 answers_snapshot = snapshot_from_state()
 
+configured_sections = load_hospital_section_settings(st.session_state.hospital_name)
+enabled_section_names = set(configured_sections) if configured_sections is not None else None
+
+
+def section_is_enabled(section_name):
+    return enabled_section_names is None or section_name in enabled_section_names
+
 
 def is_required_question(q):
     """Treat survey questions as required unless explicitly labeled optional."""
@@ -1503,6 +1615,8 @@ def answer_is_complete(q, answer):
 def visible_questions(snapshot, section=None, required_only=False):
     questions = []
     for question in QUESTIONS:
+        if not section_is_enabled(question["section"]):
+            continue
         if section and question["section"] != section:
             continue
         if required_only and not is_required_question(question):
@@ -1557,6 +1671,8 @@ for q in QUESTIONS:
     if q["section"] not in seen_sections:
         seen_sections.append(q["section"])
         section_visible[q["section"]] = False
+    if not section_is_enabled(q["section"]):
+        continue
     if is_visible(q, answers_snapshot):
         section_visible[q["section"]] = True
 
