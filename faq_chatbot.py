@@ -193,7 +193,7 @@ def _chatbot_html(payload: list[dict[str, Any]]) -> str:
     #sdoh-faq-chatbot {
       position: fixed;
       right: 22px;
-      bottom: 22px;
+      bottom: 82px;
       z-index: 2147483000;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       color: #172033;
@@ -310,7 +310,7 @@ def _chatbot_html(payload: list[dict[str, Any]]) -> str:
     @media (max-width: 520px) {
       #sdoh-faq-chatbot {
         right: 16px;
-        bottom: 16px;
+        bottom: 76px;
       }
       .sdoh-chat-panel {
         width: calc(100vw - 32px);
